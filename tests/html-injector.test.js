@@ -21,6 +21,9 @@ describe('injectHtml', () => {
     const result = injectHtml(sampleHtml, 'speaker', 'http://localhost:3000');
     expect(result).toContain('/socket.io/socket.io.js');
     expect(result).toContain('/public/danmaku-renderer.js');
+    expect(result).toContain('/public/slide-sync.js');
+    expect(result).toContain('/public/audience-panel.js');
+    expect(result).toContain('/public/moderator-panel.js');
     const bodyCloseIdx = result.indexOf('</body>');
     const scriptIdx = result.indexOf('danmaku-renderer.js');
     expect(scriptIdx).toBeLessThan(bodyCloseIdx);
