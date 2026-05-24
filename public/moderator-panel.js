@@ -9,7 +9,7 @@
     const panel = document.createElement('div');
     panel.id = 'side-panel';
     panel.innerHTML = `
-      <div class="panel-toggle" title="收起/展开">◀</div>
+      <div class="panel-toggle" title="收起/展开">▶</div>
       <div class="panel-header">
         弹幕审核
         <span class="mode-label auto" id="mode-label">自动通过</span>
@@ -29,7 +29,7 @@
     toggle.addEventListener('click', () => {
       collapsed = !collapsed;
       panel.classList.toggle('collapsed', collapsed);
-      toggle.textContent = collapsed ? '▶' : '◀';
+      toggle.textContent = collapsed ? '◀' : '▶';
     });
 
     socket.on('danmaku:pending', (dm) => {

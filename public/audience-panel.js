@@ -20,7 +20,7 @@
     const panel = document.createElement('div');
     panel.id = 'side-panel';
     panel.innerHTML = `
-      <div class="panel-toggle" title="收起/展开">◀</div>
+      <div class="panel-toggle" title="收起/展开">▶</div>
       <div class="panel-header">发送弹幕</div>
       <div class="panel-body">
         <div id="audience-input">
@@ -54,7 +54,7 @@
     toggle.addEventListener('click', () => {
       collapsed = !collapsed;
       panel.classList.toggle('collapsed', collapsed);
-      toggle.textContent = collapsed ? '▶' : '◀';
+      toggle.textContent = collapsed ? '◀' : '▶';
     });
 
     const textInput = document.getElementById('dm-text');

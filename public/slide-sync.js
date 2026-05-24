@@ -30,6 +30,11 @@
       goToSlide(idx, true);
     });
 
+    // Catch up if we missed the initial slide:sync event
+    if (typeof window._lastSlideSync === 'number') {
+      goToSlide(window._lastSlideSync, true);
+    }
+
     // Only speaker broadcasts slide changes
     if (window.BS_ROLE === 'speaker') {
       setupBroadcastChannelListener();
@@ -99,13 +104,58 @@
       return;
     }
 
-    // Fallback: manually toggle slide classes
+    // Fallback: replicate html-ppt go() behavior including animations
     const slides = document.querySelectorAll('.slide');
-    if (idx >= 0 && idx < slides.length) {
-      slides.forEach((s, i) => {
-        s.classList.toggle('is-active', i === idx);
-      });
+    const total = slides.length;
+    if (idx < 0 || idx >= total) return;
+
+    // 1. Toggle slide visibility classes
+    slides.forEach((s, i) => {
+      s.classList.toggle('is-active', i === idx);
+      s.classList.toggle('is-prev', i < idx);
+    });
+
+    // 2. Update progress bar
+    const barFill = document.querySelector('.progress-bar span');
+    if (barFill) {
+      barFill.style.width = ((idx + 1) / total * 100) + '%';
     }
+
+    // 3. Update slide number
+    const numEl = document.querySelector('.slide-number');
+    if (numEl) {
+      numEl.setAttribute('data-current', idx + 1);
+      numEl.setAttribute('data-total', total);
+    }
+
+    // 4. Update URL hash (1-based)
+    const hashTarget = '#/' + (idx + 1);
+    if (location.hash !== hashTarget) {
+      history.replaceState(null, '', hashTarget);
+    }
+
+    // 5. Re-trigger entry animations (critical for visual effect)
+    const activeSlide = slides[idx];
+    activeSlide.querySelectorAll('[data-anim]').forEach(el => {
+      const anim = el.getAttribute('data-anim');
+      el.classList.remove('anim-' + anim);
+      void el.offsetWidth; // force reflow
+      el.classList.add('anim-' + anim);
+    });
+
+    // 6. Re-trigger counter-up animations
+    activeSlide.querySelectorAll('.counter').forEach(el => {
+      const target = parseFloat(el.getAttribute('data-to') || el.textContent);
+      const dur = parseInt(el.getAttribute('data-dur') || '1200', 10);
+      const start = performance.now();
+      function tick(now) {
+        const t = Math.min(1, (now - start) / dur);
+        const v = target * (1 - Math.pow(1 - t, 3));
+        el.textContent = (target % 1 === 0) ? Math.round(v) : v.toFixed(1);
+        if (t < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
   }
 
   if (document.readyState === 'loading') {

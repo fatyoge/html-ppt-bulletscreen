@@ -71,6 +71,11 @@
       speedMultiplier = state.speed;
       maxConcurrent = state.density;
     });
+
+    // Save slide sync data for slide-sync.js (which may miss the initial event)
+    socket.on('slide:sync', ({ idx }) => {
+      window._lastSlideSync = idx;
+    });
   }
 
   function tryRender() {
