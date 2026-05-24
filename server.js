@@ -125,6 +125,7 @@ io.on('connection', (socket) => {
     if (socket.data.role !== 'moderator') return;
     const dm = store.block(id);
     if (dm) {
+      io.emit('danmaku:blocked', { id: dm.id });
       io.to(dm.senderId).emit('danmaku:rejected', { id: dm.id });
       io.sockets.sockets.forEach((s) => {
         if (s.data.role === 'moderator') {
@@ -172,7 +173,15 @@ io.on('connection', (socket) => {
     slideSync.removeSpeaker(socket.id);
     const modCount = Array.from(io.sockets.sockets.values())
       .filter(s => s.data.role === 'moderator').length;
-    store.setModeratorCount(modCount);
+    const autoApproved = store.setModeratorCount(modCount);
+    autoApproved.forEach(dm => {
+      io.emit('danmaku:approved', {
+        id: dm.id,
+        text: dm.text,
+        color: dm.color,
+        senderId: dm.senderId
+      });
+    });
   });
 });
 

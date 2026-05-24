@@ -172,9 +172,31 @@
 
   function setPaused(paused) {
     isPaused = paused;
-    activeDanmaku.forEach(dm => {
-      dm.el.style.animationPlayState = paused ? 'paused' : 'running';
-    });
+    if (paused) {
+      // Freeze all active danmaku by computing current transform and setting it
+      activeDanmaku.forEach(dm => {
+        const computed = getComputedStyle(dm.el);
+        const matrix = new DOMMatrix(computed.transform);
+        dm.el.style.transition = 'none';
+        dm.el.style.transform = `translateX(${matrix.m41}px)`;
+        dm._paused = true;
+      });
+    } else {
+      // Resume animation from current position
+      const screenWidth = window.innerWidth;
+      activeDanmaku.forEach(dm => {
+        if (dm._paused) {
+          const width = dm.el.offsetWidth;
+          const distance = screenWidth + width + 100;
+          const baseDuration = 8000;
+          const duration = baseDuration / speedMultiplier;
+          dm.el.style.transition = `transform ${duration}ms linear`;
+          dm.el.style.transform = `translateX(-${distance}px)`;
+          dm._paused = false;
+        }
+      });
+      tryRender();
+    }
   }
 
   function initRoleUI() {
