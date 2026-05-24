@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="minimal-white">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test Deck</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  .deck { width: 100%; height: 100%; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    font-size: 48px; font-family: sans-serif;
+  }
+  .slide.is-active { display: flex; }
+  .slide:nth-child(1) { background: #f0f0f0; }
+  .slide:nth-child(2) { background: #e0e0e0; }
+  .slide:nth-child(3) { background: #d0d0d0; }
+</style>
+</head>
+<body>
+<div class="deck">
+  <section class="slide is-active" data-title="Slide 1"><h1>第一页</h1></section>
+  <section class="slide" data-title="Slide 2"><h1>第二页</h1></section>
+  <section class="slide" data-title="Slide 3"><h1>第三页</h1></section>
+</div>
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  let idx = 0;
+  function go(n) {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, i) => s.classList.toggle('is-active', i === n));
+    idx = n;
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { go(idx + 1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { go(idx - 1); e.preventDefault(); }
+  });
+})();
+</script>
+</body>
+</html>
