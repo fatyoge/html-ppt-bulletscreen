@@ -4,6 +4,8 @@ const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
 const { injectHtml } = require('./lib/html-injector');
+const { DanmakuStore } = require('./lib/danmaku-store');
+const { SlideSync } = require('./lib/slide-sync');
 
 const HTML_FILE = process.argv[2];
 if (!HTML_FILE) {
@@ -38,6 +40,140 @@ app.get('/audience', (req, res) => {
 app.get('/moderator', (req, res) => {
   const html = injectHtml(originalHtml, 'moderator', '');
   res.send(html);
+});
+
+const store = new DanmakuStore();
+const slideSync = new SlideSync();
+
+io.on('connection', (socket) => {
+  // Wait for role announcement
+  socket.on('role', (role) => {
+    socket.data.role = role;
+
+    if (role === 'speaker') {
+      const isFirst = slideSync.setSpeaker(socket.id);
+      socket.emit('speaker:status', { hasControl: isFirst });
+    }
+
+    if (role === 'moderator') {
+      const count = Array.from(io.sockets.sockets.values())
+        .filter(s => s.data.role === 'moderator').length;
+      store.setModeratorCount(count);
+      socket.emit('moderation:status', { active: count > 0 });
+      socket.emit('moderation:pending', store.getPending());
+    }
+
+    // Send sync state to all new connections
+    socket.emit('slide:sync', {
+      idx: slideSync.getCurrentSlide(),
+      total: 0 // Will be determined client-side
+    });
+    socket.emit('control:state', slideSync.getControlState());
+  });
+
+  // Danmaku send
+  socket.on('danmaku:send', ({ text, color }) => {
+    if (socket.data.role !== 'audience') return;
+    const id = store.addDanmaku(text, color, socket.id);
+    const pending = store.getPending();
+    const dm = pending.find(d => d.id === id);
+
+    if (dm) {
+      // In review mode, notify moderators
+      io.sockets.sockets.forEach((s) => {
+        if (s.data.role === 'moderator') {
+          s.emit('danmaku:pending', dm);
+        }
+      });
+    } else {
+      // Auto-approved, broadcast to all
+      const approved = store.getApprovedHistory();
+      const sent = approved.find(d => d.id === id);
+      if (sent) {
+        io.emit('danmaku:approved', {
+          id: sent.id,
+          text: sent.text,
+          color: sent.color,
+          senderId: sent.senderId
+        });
+      }
+    }
+  });
+
+  // Moderator approve
+  socket.on('danmaku:approve', ({ id }) => {
+    if (socket.data.role !== 'moderator') return;
+    const dm = store.approve(id);
+    if (dm) {
+      io.emit('danmaku:approved', {
+        id: dm.id,
+        text: dm.text,
+        color: dm.color,
+        senderId: dm.senderId
+      });
+      // Notify moderators to remove from pending
+      io.sockets.sockets.forEach((s) => {
+        if (s.data.role === 'moderator') {
+          s.emit('danmaku:removed', { id: dm.id });
+        }
+      });
+    }
+  });
+
+  // Moderator block
+  socket.on('danmaku:block', ({ id }) => {
+    if (socket.data.role !== 'moderator') return;
+    const dm = store.block(id);
+    if (dm) {
+      io.to(dm.senderId).emit('danmaku:rejected', { id: dm.id });
+      io.sockets.sockets.forEach((s) => {
+        if (s.data.role === 'moderator') {
+          s.emit('danmaku:removed', { id: dm.id });
+        }
+      });
+    }
+  });
+
+  // Slide navigation
+  socket.on('slide:go', ({ idx }) => {
+    if (socket.data.role !== 'speaker') return;
+    const success = slideSync.setSlide(idx, socket.id);
+    if (success) {
+      socket.broadcast.emit('slide:go', { idx });
+    }
+  });
+
+  // Speaker controls
+  socket.on('control:clear', () => {
+    if (socket.data.role !== 'speaker') return;
+    io.emit('control:clear');
+  });
+
+  socket.on('control:pause', ({ paused }) => {
+    if (socket.data.role !== 'speaker') return;
+    slideSync.setControlState({ paused });
+    io.emit('control:pause', { paused });
+  });
+
+  socket.on('control:speed', ({ speed }) => {
+    if (socket.data.role !== 'speaker') return;
+    slideSync.setControlState({ speed });
+    io.emit('control:speed', { speed });
+  });
+
+  socket.on('control:density', ({ density }) => {
+    if (socket.data.role !== 'speaker') return;
+    slideSync.setControlState({ density });
+    io.emit('control:density', { density });
+  });
+
+  // Disconnect
+  socket.on('disconnect', () => {
+    slideSync.removeSpeaker(socket.id);
+    const modCount = Array.from(io.sockets.sockets.values())
+      .filter(s => s.data.role === 'moderator').length;
+    store.setModeratorCount(modCount);
+  });
 });
 
 const PORT = process.env.PORT || 3000;
