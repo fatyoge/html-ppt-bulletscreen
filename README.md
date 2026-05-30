@@ -23,6 +23,8 @@
 - **演讲者控制** — 清空弹幕、暂停/恢复、调节速度、调节密度
 - **零构建** — 纯原生 JavaScript + CSS，无需任何前端构建工具
 - **html-ppt 深度集成** — 自动检测翻页，通过 BroadcastChannel 与原生运行时协作
+- **一键外网分享** — 集成 ngrok 自动生成公网链接，演讲者按 `Ctrl+Alt+S` 弹出二维码
+- **移动端适配** — 手机浏览器自动切换为悬浮按钮 + 侧滑抽屉模式
 
 ## 效果预览
 
@@ -75,21 +77,40 @@ node server.js examples/html-ppt-test.html
 node server.js ~/my-talk/index.html
 ```
 
-启动成功后，控制台会输出三个访问链接：
+启动成功后，控制台会输出访问链接：
 
 ```
 🎯 弹幕服务器已启动
 
-演讲者: http://192.168.3.48:3000/speaker
-管理者: http://192.168.3.48:3000/moderator
-观众:   http://192.168.3.48:3000/audience
+局域网访问：
+  演讲者: http://192.168.3.48:3000/speaker
+  管理者: http://192.168.3.48:3000/moderator
+  观众:   http://192.168.3.48:3000/
+
+外网访问（ngrok）：
+  观众:   https://xxx.ngrok-free.app/
+
+快捷键：Ctrl + Alt + S 打开分享弹窗
 ```
+
+如需外网访问，请先设置 ngrok token：
+```bash
+# Windows
+set NGROK_AUTHTOKEN=your_token_here
+node server.js examples/test-deck.html
+
+# macOS / Linux
+export NGROK_AUTHTOKEN=your_token_here
+node server.js examples/test-deck.html
+```
+
+获取 token：https://dashboard.ngrok.com/get-started/your-authtoken
 
 ### 使用流程
 
 1. **演讲者** 打开 `/speaker` 链接，用 `→` / `←` / `空格` 翻页
 2. **管理者**（可选）打开 `/moderator` 链接，审核弹幕
-3. **观众** 打开 `/audience` 链接，发送弹幕并观看
+3. **观众** 打开 `/` 链接（根路径，无需后缀），发送弹幕并观看
 
 > 当没有管理者在线时，弹幕自动通过；有管理者在线时，弹幕进入审核队列。
 
@@ -100,12 +121,15 @@ node server.js ~/my-talk/index.html
 - 同屏展示 HTML 幻灯片
 - 底部控制栏：清空弹幕、暂停/恢复、调节速度/密度
 - 翻页自动同步到所有观众和管理者
+- 按 `Ctrl + Alt + S` 弹出分享弹窗，显示外网链接、局域网链接和二维码
 
 ### 观众（Audience）
 
 - 同屏展示 HTML 幻灯片
-- 右侧可折叠侧边栏：弹幕输入 + 8 色颜色选择器
+- **桌面端**：右侧可折叠侧边栏，弹幕输入 + 8 色颜色选择器
+- **手机端**：右下角悬浮按钮，点击后从右侧滑出抽屉面板
 - 发送的弹幕需通过审核后显示（有管理者时）
+- 访问地址：`/`（根路径，无需后缀）
 
 ### 管理者（Moderator）
 
@@ -175,6 +199,7 @@ bullet-screen/
 |------|------|------|
 | 命令行参数 | HTML 文件路径 | `node server.js ./talk.html` |
 | 环境变量 | 服务端口号 | `PORT=8080 node server.js ./talk.html` |
+| 环境变量 | ngrok 认证令牌 | `NGROK_AUTHTOKEN=xxx node server.js ./talk.html` |
 
 ## 开发
 
