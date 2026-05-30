@@ -31,25 +31,25 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 
 async function startCloudflareTunnel(port) {
   return new Promise((resolve) => {
+    const isWin = process.platform === 'win32';
     const cf = spawn('cloudflared', ['tunnel', '--url', `http://localhost:${port}`], {
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: isWin
     });
 
     let url = null;
-    let stderr = '';
 
-    cf.stdout.on('data', (data) => {
+    const tryExtractUrl = (data) => {
       const text = data.toString();
       const match = text.match(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/);
       if (match && !url) {
         url = match[0];
         resolve({ url, process: cf });
       }
-    });
+    };
 
-    cf.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
+    cf.stdout.on('data', tryExtractUrl);
+    cf.stderr.on('data', tryExtractUrl);
 
     cf.on('error', () => {
       resolve(null);

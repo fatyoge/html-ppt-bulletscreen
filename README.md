@@ -96,6 +96,8 @@ node server.js ~/my-talk/index.html
 > 外网访问优先使用 Cloudflare Tunnel（最稳定），自动回退到 localtunnel。
 >
 > **安装 cloudflared（推荐，更稳定）：**
+> https://github.com/cloudflare/cloudflared/releases
+> https://github.com/cloudflare/cloudflared/releases/download/2026.5.2/cloudflared-windows-amd64.msi
 > ```bash
 > # Windows (PowerShell)
 > winget install --id Cloudflare.cloudflared
