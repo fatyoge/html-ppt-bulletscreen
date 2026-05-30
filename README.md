@@ -93,7 +93,20 @@ node server.js ~/my-talk/index.html
 快捷键：Ctrl + Alt + S 打开分享弹窗
 ```
 
-> 外网地址由 localtunnel 自动生成，无需配置。如果 localtunnel 连接失败，服务会自动降级为仅局域网模式。
+> 外网访问优先使用 Cloudflare Tunnel（最稳定），自动回退到 localtunnel。
+>
+> **安装 cloudflared（推荐，更稳定）：**
+> ```bash
+> # Windows (PowerShell)
+> winget install --id Cloudflare.cloudflared
+>
+> # macOS
+> brew install cloudflare/cloudflare/cloudflared
+>
+> # 其他系统参见 https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
+> ```
+>
+> 未安装 cloudflared 时自动使用 localtunnel 作为备选。
 
 ### 使用流程
 

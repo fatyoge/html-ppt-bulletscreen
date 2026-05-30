@@ -3,6 +3,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 const localtunnel = require('localtunnel');
 const QRCode = require('qrcode');
 const { injectHtml } = require('./lib/html-injector');
@@ -28,7 +29,55 @@ const io = new Server(httpServer);
 // Static assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+async function startCloudflareTunnel(port) {
+  return new Promise((resolve) => {
+    const cf = spawn('cloudflared', ['tunnel', '--url', `http://localhost:${port}`], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    let url = null;
+    let stderr = '';
+
+    cf.stdout.on('data', (data) => {
+      const text = data.toString();
+      const match = text.match(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/);
+      if (match && !url) {
+        url = match[0];
+        resolve({ url, process: cf });
+      }
+    });
+
+    cf.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    cf.on('error', () => {
+      resolve(null);
+    });
+
+    // 30 秒超时
+    setTimeout(() => {
+      if (!url) {
+        cf.kill();
+        resolve(null);
+      }
+    }, 30000);
+  });
+}
+
 async function startTunnel(port) {
+  // 优先尝试 Cloudflare Tunnel（更稳定）
+  const cfResult = await startCloudflareTunnel(port);
+  if (cfResult) {
+    return cfResult.url;
+  }
+
+  // 回退到 localtunnel
+  console.log('\n⚠️  cloudflared 不可用，尝试 localtunnel...');
+  console.log('   如需使用 Cloudflare Tunnel（更稳定）：');
+  console.log('   1. 访问 https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/');
+  console.log('   2. 下载安装 cloudflared\n');
+
   try {
     const tunnel = await localtunnel({ port });
     return tunnel.url;
