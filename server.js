@@ -3,6 +3,8 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
+const ngrok = require('@ngrok/ngrok');
+const QRCode = require('qrcode');
 const { injectHtml } = require('./lib/html-injector');
 const { DanmakuStore } = require('./lib/danmaku-store');
 const { SlideSync } = require('./lib/slide-sync');
@@ -26,26 +28,23 @@ const io = new Server(httpServer);
 // Static assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Role routes
-app.get('/', (req, res) => {
-  const html = injectHtml(originalHtml, 'audience', '');
-  res.send(html);
-});
+async function startTunnel(port) {
+  const token = process.env.NGROK_AUTHTOKEN;
+  if (!token) {
+    console.log('\n⚠️  未设置 NGROK_AUTHTOKEN，仅提供局域网访问');
+    console.log('   如需外网访问，请访问 https://dashboard.ngrok.com 获取 token');
+    console.log('   然后运行: set NGROK_AUTHTOKEN=xxx && node server.js <html>\n');
+    return null;
+  }
 
-app.get('/speaker', (req, res) => {
-  const html = injectHtml(originalHtml, 'speaker', '');
-  res.send(html);
-});
-
-app.get('/audience', (req, res) => {
-  const html = injectHtml(originalHtml, 'audience', '');
-  res.send(html);
-});
-
-app.get('/moderator', (req, res) => {
-  const html = injectHtml(originalHtml, 'moderator', '');
-  res.send(html);
-});
+  try {
+    const listener = await ngrok.connect({ addr: port, authtoken: token });
+    return listener.url();
+  } catch (err) {
+    console.error('ngrok 连接失败:', err.message);
+    return null;
+  }
+}
 
 const store = new DanmakuStore();
 const slideSync = new SlideSync();
@@ -191,21 +190,59 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
+
+httpServer.listen(PORT, async () => {
   const interfaces = require('os').networkInterfaces();
-  let ip = 'localhost';
+  let lanUrl = `http://localhost:${PORT}`;
   for (const name in interfaces) {
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {
-        ip = iface.address;
+        lanUrl = `http://${iface.address}:${PORT}`;
         break;
       }
     }
-    if (ip !== 'localhost') break;
+    if (lanUrl !== `http://localhost:${PORT}`) break;
   }
 
+  const publicUrl = await startTunnel(PORT);
+  let qrDataUrl = '';
+  if (publicUrl) {
+    try {
+      qrDataUrl = await QRCode.toDataURL(publicUrl + '/', { width: 256, margin: 2 });
+    } catch (err) {
+      console.error('二维码生成失败:', err.message);
+    }
+  }
+
+  // Define routes after URLs are ready
+  app.get('/', (req, res) => {
+    const html = injectHtml(originalHtml, 'audience', '');
+    res.send(html);
+  });
+
+  app.get('/speaker', (req, res) => {
+    const html = injectHtml(originalHtml, 'speaker', '', publicUrl, lanUrl, qrDataUrl);
+    res.send(html);
+  });
+
+  app.get('/audience', (req, res) => {
+    const html = injectHtml(originalHtml, 'audience', '');
+    res.send(html);
+  });
+
+  app.get('/moderator', (req, res) => {
+    const html = injectHtml(originalHtml, 'moderator', '');
+    res.send(html);
+  });
+
   console.log('\n🎯 弹幕服务器已启动\n');
-  console.log(`演讲者: http://${ip}:${PORT}/speaker`);
-  console.log(`管理者: http://${ip}:${PORT}/moderator`);
-  console.log(`观众:   http://${ip}:${PORT}/audience\n`);
+  console.log(`局域网访问：`);
+  console.log(`  演讲者: ${lanUrl}/speaker`);
+  console.log(`  管理者: ${lanUrl}/moderator`);
+  console.log(`  观众:   ${lanUrl}/\n`);
+  if (publicUrl) {
+    console.log(`外网访问（ngrok）：`);
+    console.log(`  观众:   ${publicUrl}/\n`);
+  }
+  console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗\n`);
 });
