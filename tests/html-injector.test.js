@@ -44,4 +44,32 @@ describe('injectHtml', () => {
     expect(() => injectHtml('<html><head></head></html>', 'speaker', ''))
       .toThrow('HTML must contain </body>');
   });
+
+  test('injects public URL and QR code for speaker role', () => {
+    const result = injectHtml(
+      sampleHtml,
+      'speaker',
+      'http://localhost:3000',
+      'https://abc123.ngrok.io',
+      'http://192.168.1.5:3000',
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+    );
+    expect(result).toContain("window.BS_PUBLIC_URL = 'https://abc123.ngrok.io'");
+    expect(result).toContain("window.BS_LAN_URL = 'http://192.168.1.5:3000'");
+    expect(result).toContain("window.BS_QR_CODE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='");
+  });
+
+  test('does not inject speaker-only vars for audience role', () => {
+    const result = injectHtml(
+      sampleHtml,
+      'audience',
+      'http://localhost:3000',
+      'https://abc123.ngrok.io',
+      'http://192.168.1.5:3000',
+      'data:image/png;base64,abc123'
+    );
+    expect(result).not.toContain('BS_PUBLIC_URL');
+    expect(result).not.toContain('BS_LAN_URL');
+    expect(result).not.toContain('BS_QR_CODE');
+  });
 });
