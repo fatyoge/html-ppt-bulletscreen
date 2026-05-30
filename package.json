@@ -8,8 +8,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@ngrok/ngrok": "^1.7.0",
     "express": "^4.21.0",
+    "localtunnel": "^2.0.2",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.0"
   },

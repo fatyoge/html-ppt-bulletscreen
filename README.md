@@ -23,7 +23,7 @@
 - **演讲者控制** — 清空弹幕、暂停/恢复、调节速度、调节密度
 - **零构建** — 纯原生 JavaScript + CSS，无需任何前端构建工具
 - **html-ppt 深度集成** — 自动检测翻页，通过 BroadcastChannel 与原生运行时协作
-- **一键外网分享** — 集成 ngrok 自动生成公网链接，演讲者按 `Ctrl+Alt+S` 弹出二维码
+- **一键外网分享** — 自动创建外网隧道，演讲者按 `Ctrl+Alt+S` 弹出二维码
 - **移动端适配** — 手机浏览器自动切换为悬浮按钮 + 侧滑抽屉模式
 
 ## 效果预览
@@ -87,24 +87,13 @@ node server.js ~/my-talk/index.html
   管理者: http://192.168.3.48:3000/moderator
   观众:   http://192.168.3.48:3000/
 
-外网访问（ngrok）：
-  观众:   https://xxx.ngrok-free.app/
+外网访问：
+  观众:   https://xxx.loca.lt/
 
 快捷键：Ctrl + Alt + S 打开分享弹窗
 ```
 
-如需外网访问，请先设置 ngrok token：
-```bash
-# Windows
-set NGROK_AUTHTOKEN=your_token_here
-node server.js examples/test-deck.html
-
-# macOS / Linux
-export NGROK_AUTHTOKEN=your_token_here
-node server.js examples/test-deck.html
-```
-
-获取 token：https://dashboard.ngrok.com/get-started/your-authtoken
+> 外网地址由 localtunnel 自动生成，无需配置。如果 localtunnel 连接失败，服务会自动降级为仅局域网模式。
 
 ### 使用流程
 
@@ -199,7 +188,6 @@ bullet-screen/
 |------|------|------|
 | 命令行参数 | HTML 文件路径 | `node server.js ./talk.html` |
 | 环境变量 | 服务端口号 | `PORT=8080 node server.js ./talk.html` |
-| 环境变量 | ngrok 认证令牌 | `NGROK_AUTHTOKEN=xxx node server.js ./talk.html` |
 
 ## 开发
 

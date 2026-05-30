@@ -3,7 +3,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
-const ngrok = require('@ngrok/ngrok');
+const localtunnel = require('localtunnel');
 const QRCode = require('qrcode');
 const { injectHtml } = require('./lib/html-injector');
 const { DanmakuStore } = require('./lib/danmaku-store');
@@ -29,19 +29,11 @@ const io = new Server(httpServer);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 async function startTunnel(port) {
-  const token = process.env.NGROK_AUTHTOKEN;
-  if (!token) {
-    console.log('\n⚠️  未设置 NGROK_AUTHTOKEN，仅提供局域网访问');
-    console.log('   如需外网访问，请访问 https://dashboard.ngrok.com 获取 token');
-    console.log('   然后运行: set NGROK_AUTHTOKEN=xxx && node server.js <html>\n');
-    return null;
-  }
-
   try {
-    const listener = await ngrok.connect({ addr: port, authtoken: token });
-    return listener.url();
+    const tunnel = await localtunnel({ port });
+    return tunnel.url;
   } catch (err) {
-    console.error('ngrok 连接失败:', err.message);
+    console.error('localtunnel 连接失败:', err.message);
     return null;
   }
 }
@@ -241,7 +233,7 @@ httpServer.listen(PORT, async () => {
   console.log(`  管理者: ${lanUrl}/moderator`);
   console.log(`  观众:   ${lanUrl}/\n`);
   if (publicUrl) {
-    console.log(`外网访问（ngrok）：`);
+    console.log(`外网访问：`);
     console.log(`  观众:   ${publicUrl}/\n`);
   }
   console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗\n`);
