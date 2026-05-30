@@ -27,6 +27,11 @@ const io = new Server(httpServer);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Role routes
+app.get('/', (req, res) => {
+  const html = injectHtml(originalHtml, 'audience', '');
+  res.send(html);
+});
+
 app.get('/speaker', (req, res) => {
   const html = injectHtml(originalHtml, 'speaker', '');
   res.send(html);
