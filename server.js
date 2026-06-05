@@ -4,7 +4,6 @@ const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const localtunnel = require('localtunnel');
 const QRCode = require('qrcode');
 const { injectHtml } = require('./lib/html-injector');
 const { DanmakuStore } = require('./lib/danmaku-store');
@@ -28,6 +27,29 @@ const io = new Server(httpServer);
 
 // Static assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
+
+function checkCloudflaredInstalled() {
+  return new Promise((resolve) => {
+    const isWin = process.platform === 'win32';
+    const proc = spawn('cloudflared', ['--version'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: isWin
+    });
+
+    let installed = false;
+
+    proc.stdout.on('data', () => { installed = true; });
+    proc.stderr.on('data', () => { installed = true; });
+
+    proc.on('error', () => { resolve(false); });
+    proc.on('close', (code) => { resolve(installed || code === 0); });
+
+    setTimeout(() => {
+      proc.kill();
+      resolve(false);
+    }, 5000);
+  });
+}
 
 async function startCloudflareTunnel(port) {
   return new Promise((resolve) => {
@@ -63,28 +85,6 @@ async function startCloudflareTunnel(port) {
       }
     }, 30000);
   });
-}
-
-async function startTunnel(port) {
-  // 优先尝试 Cloudflare Tunnel（更稳定）
-  const cfResult = await startCloudflareTunnel(port);
-  if (cfResult) {
-    return cfResult.url;
-  }
-
-  // 回退到 localtunnel
-  console.log('\n⚠️  cloudflared 不可用，尝试 localtunnel...');
-  console.log('   如需使用 Cloudflare Tunnel（更稳定）：');
-  console.log('   1. 访问 https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/');
-  console.log('   2. 下载安装 cloudflared\n');
-
-  try {
-    const tunnel = await localtunnel({ port });
-    return tunnel.url;
-  } catch (err) {
-    console.error('localtunnel 连接失败:', err.message);
-    return null;
-  }
 }
 
 const store = new DanmakuStore();
@@ -245,13 +245,19 @@ httpServer.listen(PORT, async () => {
     if (lanUrl !== `http://localhost:${PORT}`) break;
   }
 
-  const publicUrl = await startTunnel(PORT);
+  let publicUrl = '';
   let qrDataUrl = '';
-  if (publicUrl) {
-    try {
-      qrDataUrl = await QRCode.toDataURL(publicUrl + '/', { width: 256, margin: 2 });
-    } catch (err) {
-      console.error('二维码生成失败:', err.message);
+
+  const cfInstalled = await checkCloudflaredInstalled();
+  if (cfInstalled) {
+    const cfResult = await startCloudflareTunnel(PORT);
+    if (cfResult) {
+      publicUrl = cfResult.url;
+      try {
+        qrDataUrl = await QRCode.toDataURL(publicUrl + '/', { width: 256, margin: 2 });
+      } catch (err) {
+        console.error('二维码生成失败:', err.message);
+      }
     }
   }
 

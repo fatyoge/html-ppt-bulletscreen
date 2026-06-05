@@ -93,9 +93,9 @@ node server.js ~/my-talk/index.html
 快捷键：Ctrl + Alt + S 打开分享弹窗
 ```
 
-> 外网访问优先使用 Cloudflare Tunnel（最稳定），自动回退到 localtunnel。
+> 外网访问使用 Cloudflare Tunnel，需提前安装 cloudflared。
 >
-> **安装 cloudflared（推荐，更稳定）：**
+> **安装 cloudflared：**
 > https://github.com/cloudflare/cloudflared/releases
 > https://github.com/cloudflare/cloudflared/releases/download/2026.5.2/cloudflared-windows-amd64.msi
 > ```bash
@@ -108,7 +108,7 @@ node server.js ~/my-talk/index.html
 > # 其他系统参见 https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
 > ```
 >
-> 未安装 cloudflared 时自动使用 localtunnel 作为备选。
+> 未安装 cloudflared 时仅提供局域网访问，不生成外网链接。
 
 ### 使用流程
 
