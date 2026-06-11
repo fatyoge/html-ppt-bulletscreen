@@ -23,6 +23,7 @@
 - **Speaker controls** — Clear, pause/resume, speed and density adjustment
 - **Zero build** — Pure vanilla JavaScript + CSS, no frontend build tools required
 - **Deep html-ppt integration** — Auto-detects slide changes via BroadcastChannel
+- **Animation sync** — CSS / WAAPI / GSAP / Anime.js / Lottie animations automatically sync from speaker to audience
 
 ## Preview
 
@@ -92,6 +93,62 @@ Audience:  http://192.168.3.48:3000/audience
 3. **Audience** opens the `/audience` link to send and view danmaku
 
 > When no moderator is online, danmaku is auto-approved. When a moderator joins, all danmaku enters a review queue.
+
+## Animation Sync
+
+Animations triggered on the speaker side are automatically synchronized to all audience members.
+
+### Supported Animation Types
+
+| Type | Support | Notes |
+|------|---------|-------|
+| CSS `@keyframes` Animation | ✅ Auto-sync | Triggered via `classList.add()` |
+| CSS Transition | ✅ Auto-sync | Triggered via `style` or `class` changes |
+| Web Animations API | ✅ Auto-sync | `element.animate()` calls |
+| GSAP | ✅ Auto-sync | `gsap.to()` / `gsap.from()` / `gsap.timeline()` |
+| Anime.js | ✅ Auto-sync | `anime({...})` calls |
+| Lottie | ✅ Auto-sync | `anim.play()` / `anim.pause()` / `anim.stop()` |
+| Declarative annotations | ✅ Manual | `data-bs-sync-anim` attribute (see below) |
+| `:hover` / `:focus` pseudo-classes | ⚠️ Requires annotation | Use declarative annotations |
+
+### Declarative Annotation Usage
+
+For cases that hooks cannot automatically intercept (e.g., `:hover`-triggered animations), use `data-bs-sync-anim` annotations:
+
+```html
+<!-- hover trigger -->
+<div data-bs-sync-anim="hover-glow" data-bs-sync-trigger="hover">...</div>
+
+<!-- click trigger -->
+<button data-bs-sync-anim="button-pulse" data-bs-sync-trigger="click">...</button>
+
+<!-- visible trigger (IntersectionObserver) -->
+<div data-bs-sync-anim="scroll-reveal" data-bs-sync-trigger="visible">...</div>
+
+<!-- auto trigger (follows class changes) -->
+<div data-bs-sync-anim="fade-in" data-bs-sync-trigger="auto">...</div>
+```
+
+### Animation Sync Test Pages
+
+Five built-in test pages are included:
+
+```bash
+# CSS Animation + Transition
+node server.js examples/anim-test-css.html
+
+# Web Animations API
+node server.js examples/anim-test-waapi.html
+
+# GSAP
+node server.js examples/anim-test-gsap.html
+
+# Anime.js
+node server.js examples/anim-test-anime.html
+
+# Declarative annotations
+node server.js examples/anim-test-declarative.html
+```
 
 ## Role Guide
 

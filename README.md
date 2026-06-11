@@ -23,6 +23,7 @@
 - **演讲者控制** — 清空弹幕、暂停/恢复、调节速度、调节密度
 - **零构建** — 纯原生 JavaScript + CSS，无需任何前端构建工具
 - **html-ppt 深度集成** — 自动检测翻页，通过 BroadcastChannel 与原生运行时协作
+- **动画同步** — 演讲者端触发的 CSS / WAAPI / GSAP / Anime.js / Lottie 动画自动同步到观众端
 - **一键外网分享** — 自动创建外网隧道，演讲者按 `Ctrl+Alt+S` 弹出二维码
 - **移动端适配** — 手机浏览器自动切换为悬浮按钮 + 侧滑抽屉模式
 
@@ -117,6 +118,62 @@ node server.js ~/my-talk/index.html
 3. **观众** 打开 `/` 链接（根路径，无需后缀），发送弹幕并观看
 
 > 当没有管理者在线时，弹幕自动通过；有管理者在线时，弹幕进入审核队列。
+
+## 动画同步
+
+演讲者端触发的动画会自动同步到所有观众端，无需额外配置。
+
+### 支持的动画类型
+
+| 类型 | 支持情况 | 说明 |
+|------|---------|------|
+| CSS `@keyframes` Animation | ✅ 自动同步 | 通过 `classList.add()` 触发的动画 |
+| CSS Transition | ✅ 自动同步 | 通过 `style` 或 `class` 变化触发的过渡 |
+| Web Animations API | ✅ 自动同步 | `element.animate()` 调用 |
+| GSAP | ✅ 自动同步 | `gsap.to()` / `gsap.from()` / `gsap.timeline()` |
+| Anime.js | ✅ 自动同步 | `anime({...})` 调用 |
+| Lottie | ✅ 自动同步 | `anim.play()` / `anim.pause()` / `anim.stop()` |
+| 声明式标注 | ✅ 手动标注 | `data-bs-sync-anim` 属性（见下方） |
+| `:hover` / `:focus` 伪类 | ⚠️ 需标注 | 无法自动拦截，通过声明式标注实现 |
+
+### 声明式标注用法
+
+对于 Hook 无法自动拦截的场景（如 `:hover` 触发的动画），可使用 `data-bs-sync-anim` 标注：
+
+```html
+<!-- hover 触发动画同步 -->
+<div data-bs-sync-anim="hover-glow" data-bs-sync-trigger="hover">...</div>
+
+<!-- click 触发动画同步 -->
+<button data-bs-sync-anim="button-pulse" data-bs-sync-trigger="click">...</button>
+
+<!-- 进入视口时同步 -->
+<div data-bs-sync-anim="scroll-reveal" data-bs-sync-trigger="visible">...</div>
+
+<!-- 自动跟随 class 变化同步 -->
+<div data-bs-sync-anim="fade-in" data-bs-sync-trigger="auto">...</div>
+```
+
+### 动画同步测试
+
+项目内置了 5 个动画同步测试页面：
+
+```bash
+# CSS Animation + Transition
+node server.js examples/anim-test-css.html
+
+# Web Animations API
+node server.js examples/anim-test-waapi.html
+
+# GSAP
+node server.js examples/anim-test-gsap.html
+
+# Anime.js
+node server.js examples/anim-test-anime.html
+
+# 声明式标注
+node server.js examples/anim-test-declarative.html
+```
 
 ## 角色说明
 
