@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web Animations API Test</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f0f23;
+    color: #e0e0e0;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .desc {
+    text-align: center;
+    color: #8892b0;
+    margin-bottom: 40px;
+    font-size: 0.95rem;
+  }
+  .section {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    background: #16162e;
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid #2a2a5a;
+  }
+  .section h2 {
+    font-size: 1.2rem;
+    color: #64ffda;
+    margin-bottom: 8px;
+  }
+  .section p {
+    color: #8892b0;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+  .demo-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .demo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .demo-box {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+  }
+  .demo-path {
+    width: 300px;
+    height: 120px;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    background: #1a1a3e;
+    border: 1px dashed #3a3a7a;
+  }
+  .path-ball {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    position: absolute;
+    top: 45px;
+    left: 10px;
+    background: linear-gradient(135deg, #ff6b6b, #feca57);
+  }
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #2a2a5a;
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #3a3a8a; }
+  .btn:active { transform: scale(0.96); }
+
+  .grad-1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .grad-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .grad-3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .grad-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+  .grad-5 { background: linear-gradient(135deg, #fa709a, #fee140); }
+</style>
+</head>
+<body>
+
+<h1>Web Animations API Test</h1>
+<p class="desc">Test WAAPI animations using element.animate(). No external dependencies.</p>
+
+<!-- Section 1: Basic Keyframes -->
+<div class="section">
+  <h2>Basic Keyframes</h2>
+  <p>Simple fade, slide+rotate, and pulse scale animations.</p>
+  <div class="demo-row">
+    <div class="demo-item">
+      <div id="wa-fade" class="demo-box grad-1">Fade</div>
+      <button class="btn" onclick="animFade()">Fade In/Out</button>
+    </div>
+    <div class="demo-item">
+      <div id="wa-slide" class="demo-box grad-2">Slide</div>
+      <button class="btn" onclick="animSlideRotate()">Slide+Rotate</button>
+    </div>
+    <div class="demo-item">
+      <div id="wa-pulse" class="demo-box grad-3">Pulse</div>
+      <button class="btn" onclick="animPulse()">Pulse Scale</button>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: Complex Keyframes -->
+<div class="section">
+  <h2>Complex Keyframes</h2>
+  <p>Animated path with color change, and a spring effect with multiple bounces.</p>
+  <div class="demo-row">
+    <div class="demo-item">
+      <div class="demo-path">
+        <div id="wa-path" class="path-ball"></div>
+      </div>
+      <button class="btn" onclick="animPath()">Path + Color</button>
+    </div>
+    <div class="demo-item">
+      <div id="wa-spring" class="demo-box grad-4">Spring</div>
+      <button class="btn" onclick="animSpring()">Spring Bounce</button>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Property-Indexed Keyframes -->
+<div class="section">
+  <h2>Property-Indexed Keyframes</h2>
+  <p>Keyframes where each property has its own array of values, animated with different offsets.</p>
+  <div class="demo-row">
+    <div class="demo-item">
+      <div id="wa-indexed" class="demo-box grad-5">Indexed</div>
+      <button class="btn" onclick="animIndexed()">Property Indexed</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function animFade() {
+    const el = document.getElementById('wa-fade');
+    el.animate([
+      { opacity: 1 },
+      { opacity:0.2 },
+      { opacity: 1 }
+    ], { duration: 1200, easing: 'ease-in-out' });
+  }
+
+  function animSlideRotate() {
+    const el = document.getElementById('wa-slide');
+    el.animate([
+      { transform: 'translateX(0) rotate(0deg)' },
+      { transform: 'translateX(120px) rotate(180deg)' },
+      { transform: 'translateX(0) rotate(360deg)' }
+    ], { duration: 1500, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' });
+  }
+
+  function animPulse() {
+    const el = document.getElementById('wa-pulse');
+    el.animate([
+      { transform: 'scale(1)' },
+      { transform: 'scale(1.4)' },
+      { transform: 'scale(0.9)' },
+      { transform: 'scale(1)' }
+    ], { duration: 800, easing: 'ease-in-out' });
+  }
+
+  function animPath() {
+    const el = document.getElementById('wa-path');
+    el.animate([
+      { transform: 'translateX(0) translateY(0)', background: 'linear-gradient(135deg, #ff6b6b, #feca57)' },
+      { transform: 'translateX(100px) translateY(-30px)', background: 'linear-gradient(135deg, #48dbfb, #0abde3)', offset: 0.33 },
+      { transform: 'translateX(200px) translateY(30px)', background: 'linear-gradient(135deg, #1dd1a1, #10ac84)', offset: 0.66 },
+      { transform: 'translateX(250px) translateY(0)', background: 'linear-gradient(135deg, #ff9ff3, #f368e0)' }
+    ], { duration: 2000, easing: 'ease-in-out' });
+  }
+
+  function animSpring() {
+    const el = document.getElementById('wa-spring');
+    el.animate([
+      { transform: 'translateY(0) scale(1)' },
+      { transform: 'translateY(-60px) scale(1.1)', offset: 0.2 },
+      { transform: 'translateY(0) scale(0.95)', offset: 0.4 },
+      { transform: 'translateY(-30px) scale(1.05)', offset: 0.55 },
+      { transform: 'translateY(0) scale(0.98)', offset: 0.7 },
+      { transform: 'translateY(-10px) scale(1.02)', offset: 0.85 },
+      { transform: 'translateY(0) scale(1)' }
+    ], { duration: 1800, easing: 'ease-out' });
+  }
+
+  function animIndexed() {
+    const el = document.getElementById('wa-indexed');
+    el.animate({
+      transform: ['rotate(0deg)', 'rotate(90deg)', 'rotate(180deg)', 'rotate(270deg)', 'rotate(360deg)'],
+      opacity: [1, 0.5, 1, 0.5, 1],
+      borderRadius: ['12px', '50%', '12px', '50%', '12px']
+    }, { duration: 2000, easing: 'ease-in-out' });
+  }
+</script>
+
+</body>
+</html>

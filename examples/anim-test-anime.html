@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anime.js Animation Test</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a192f;
+    color: #e0e0e0;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .desc {
+    text-align: center;
+    color: #8892b0;
+    margin-bottom: 40px;
+    font-size: 0.95rem;
+  }
+  .section {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    background: #112240;
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid #233554;
+  }
+  .section h2 {
+    font-size: 1.2rem;
+    color: #64ffda;
+    margin-bottom: 8px;
+  }
+  .section p {
+    color: #8892b0;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+  .demo-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .demo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .demo-box {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+  }
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #233554;
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #2d4a6f; }
+  .btn:active { transform: scale(0.96); }
+
+  .grad-1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .grad-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .grad-3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .grad-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+  .grad-5 { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+  /* Stagger grid */
+  .stagger-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 50px);
+    gap: 8px;
+  }
+  .stagger-cell {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+
+  /* Timeline boxes */
+  .timeline-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .tl-box {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+<h1>Anime.js Animation Test</h1>
+<p class="desc">Test Anime.js animations: translate, rotate, scale, stagger grids, and timelines.</p>
+
+<!-- Section 1: Basic Animations -->
+<div class="section">
+  <h2>Basic Animations</h2>
+  <p>Translate, rotate, and scale animations using anime().</p>
+  <div class="demo-row">
+    <div class="demo-item">
+      <div id="anime-translate" class="demo-box grad-1">Move</div>
+      <button class="btn" onclick="runTranslate()">Translate</button>
+    </div>
+    <div class="demo-item">
+      <div id="anime-rotate" class="demo-box grad-2">Rotate</div>
+      <button class="btn" onclick="runRotate()">Rotate</button>
+    </div>
+    <div class="demo-item">
+      <div id="anime-scale" class="demo-box grad-3">Scale</div>
+      <button class="btn" onclick="runScale()">Scale</button>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: Stagger Grid -->
+<div class="section">
+  <h2>Stagger Grid</h2>
+  <p>10 small boxes with grid-based stagger animation.</p>
+  <div class="demo-row">
+    <div class="stagger-grid" id="stagger-grid">
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+      <div class="stagger-cell"></div>
+    </div>
+    <button class="btn" onclick="runStagger()">Stagger</button>
+  </div>
+</div>
+
+<!-- Section 3: Timeline -->
+<div class="section">
+  <h2>Timeline — Chained Animations</h2>
+  <p>Chain multiple animations on different elements using an Anime.js timeline.</p>
+  <div class="demo-row">
+    <div class="timeline-container">
+      <div id="an-tl-1" class="tl-box grad-1">1</div>
+      <div id="an-tl-2" class="tl-box grad-2">2</div>
+      <div id="an-tl-3" class="tl-box grad-3">3</div>
+      <div id="an-tl-4" class="tl-box grad-4">4</div>
+    </div>
+    <button class="btn" onclick="runTimeline()">Run Timeline</button>
+  </div>
+</div>
+
+<script>
+  function runTranslate() {
+    anime({
+      targets: '#anime-translate',
+      translateX: [0, 120, 0],
+      duration: 1200,
+      easing: 'easeInOutQuad'
+    });
+  }
+
+  function runRotate() {
+    anime({
+      targets: '#anime-rotate',
+      rotate: [0, 360],
+      duration: 1000,
+      easing: 'easeInOutBack'
+    });
+  }
+
+  function runScale() {
+    anime({
+      targets: '#anime-scale',
+      scale: [1, 1.5, 0.8, 1],
+      duration: 1000,
+      easing: 'easeInOutElastic(1, .6)'
+    });
+  }
+
+  function runStagger() {
+    anime({
+      targets: '#stagger-grid .stagger-cell',
+      scale: [
+        { value: 0, duration: 0 },
+        { value: 1, duration: 600 }
+      ],
+      opacity: [0, 1],
+      rotate: {
+        value: '1turn',
+        duration: 800
+      },
+      delay: anime.stagger(100, { grid: [5, 2], from: 'center' }),
+      easing: 'easeOutExpo'
+    });
+  }
+
+  function runTimeline() {
+    const tl = anime.timeline({
+      easing: 'easeOutExpo',
+      duration: 500
+    });
+    tl.add({ targets: '#an-tl-1', translateY: -40 })
+      .add({ targets: '#an-tl-2', translateY: -40 }, '-=300')
+      .add({ targets: '#an-tl-3', translateY: -40 }, '-=300')
+      .add({ targets: '#an-tl-4', translateY: -40 }, '-=300')
+      .add({
+        targets: ['#an-tl-1','#an-tl-2','#an-tl-3','#an-tl-4'],
+        translateY: 0,
+        duration: 600,
+        easing: 'easeOutBounce'
+      });
+  }
+</script>
+
+</body>
+</html>

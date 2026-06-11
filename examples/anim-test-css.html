@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSS Animation + Transition Test</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .desc {
+    text-align: center;
+    color: #8892b0;
+    margin-bottom: 40px;
+    font-size: 0.95rem;
+  }
+  .section {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    background: #16213e;
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid #2a2a4a;
+  }
+  .section h2 {
+    font-size: 1.2rem;
+    color: #64ffda;
+    margin-bottom: 8px;
+  }
+  .section p {
+    color: #8892b0;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+  .demo-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .demo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .demo-box {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+    cursor: default;
+  }
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #2a2a4a;
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #3a3a6a; }
+  .btn:active { transform: scale(0.96); }
+
+  /* Colorful gradients */
+  .grad-1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .grad-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .grad-3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .grad-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+  .grad-5 { background: linear-gradient(135deg, #fa709a, #fee140); }
+  .grad-6 { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+
+  /* === Keyframes Animations === */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes slideIn {
+    from { transform: translateX(-80px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-30px); }
+    60% { transform: translateY(-15px); }
+  }
+  @keyframes rotateScale {
+    from { transform: rotate(0deg) scale(0.5); opacity: 0; }
+    to   { transform: rotate(360deg) scale(1); opacity: 1; }
+  }
+
+  .anim-fade-in    { animation: fadeIn 0.8s ease forwards; }
+  .anim-slide-in   { animation: slideIn 0.8s ease-out forwards; }
+  .anim-bounce     { animation: bounce 1s ease forwards; }
+  .anim-rotate-scale { animation: rotateScale 0.8s ease-in-out forwards; }
+
+  /* === Transitions === */
+  .trans-box {
+    width: 120px;
+    height: 80px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .trans-box.expanded {
+    width: 200px;
+    height: 120px;
+    border-radius: 24px;
+    transform: rotate(5deg);
+  }
+
+  /* === Multi-class Animation === */
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .anim-fade-slide {
+    animation: fadeSlideIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .multi-box {
+    width: 140px;
+    height: 100px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+<h1>CSS Animation + Transition Test</h1>
+<p class="desc">Test CSS @keyframes animations and transitions. Click buttons to trigger animations on the demo boxes.</p>
+
+<!-- Section 1: CSS @keyframes -->
+<div class="section">
+  <h2>@keyframes Animations</h2>
+  <p>Four different keyframe animations triggered by adding/removing animation classes.</p>
+  <div class="demo-row">
+    <div class="demo-item">
+      <div id="box-fade" class="demo-box grad-1">Fade</div>
+      <button class="btn" onclick="triggerAnim('box-fade','anim-fade-in')">Fade In</button>
+    </div>
+    <div class="demo-item">
+      <div id="box-slide" class="demo-box grad-2">Slide</div>
+      <button class="btn" onclick="triggerAnim('box-slide','anim-slide-in')">Slide In</button>
+    </div>
+    <div class="demo-item">
+      <div id="box-bounce" class="demo-box grad-3">Bounce</div>
+      <button class="btn" onclick="triggerAnim('box-bounce','anim-bounce')">Bounce</button>
+    </div>
+    <div class="demo-item">
+      <div id="box-rotate" class="demo-box grad-4">Rotate</div>
+      <button class="btn" onclick="triggerAnim('box-rotate','anim-rotate-scale')">Rotate+Scale</button>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: CSS Transitions -->
+<div class="section">
+  <h2>CSS Transitions</h2>
+  <p>Click each box to toggle its expanded state. Transitions animate width, height, border-radius, and rotation.</p>
+  <div class="demo-row">
+    <div class="demo-item">
+      <div id="trans-1" class="trans-box grad-1" onclick="this.classList.toggle('expanded')">Click Me</div>
+    </div>
+    <div class="demo-item">
+      <div id="trans-2" class="trans-box grad-2" onclick="this.classList.toggle('expanded')">Click Me</div>
+    </div>
+    <div class="demo-item">
+      <div id="trans-3" class="trans-box grad-3" onclick="this.classList.toggle('expanded')">Click Me</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Multi-class Animation -->
+<div class="section">
+  <h2>Multi-class Combined Animation</h2>
+  <p>Combined fade-in + slide-in effect using a single keyframe animation with multiple transforms.</p>
+  <div class="demo-row">
+    <div class="demo-item">
+      <div id="multi-box" class="multi-box grad-5">Combined</div>
+      <button class="btn" onclick="triggerAnim('multi-box','anim-fade-slide')">Trigger</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function triggerAnim(id, className) {
+    const el = document.getElementById(id);
+    el.classList.remove(className);
+    void el.offsetWidth; // force reflow
+    el.classList.add(className);
+  }
+</script>
+
+</body>
+</html>
