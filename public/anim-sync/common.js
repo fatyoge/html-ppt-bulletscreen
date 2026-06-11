@@ -112,13 +112,15 @@
     window._danmakuSocket.emit('bs:anim:trigger', message);
   }
 
-  // Expose on global namespace
-  window.BS_AnimSync = {
-    isSpeaker: isSpeaker,
-    getStableSelector: getStableSelector,
-    broadcastTrigger: broadcastTrigger,
-    generateUUID: generateUUID
-  };
+  // Expose on global namespace (browser only)
+  if (typeof window !== 'undefined') {
+    window.BS_AnimSync = {
+      isSpeaker: isSpeaker,
+      getStableSelector: getStableSelector,
+      broadcastTrigger: broadcastTrigger,
+      generateUUID: generateUUID
+    };
+  }
 
   // Node.js compatibility for Jest
   if (typeof module !== 'undefined' && module.exports) {
