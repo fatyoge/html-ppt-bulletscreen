@@ -189,6 +189,13 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Animation sync broadcast
+  socket.on('bs:anim:trigger', (msg) => {
+    if (socket.data.role !== 'speaker') return;
+    if (!msg || !msg.type || !msg.triggerType || !msg.selector) return;
+    socket.broadcast.emit('bs:anim:trigger', msg);
+  });
+
   // Speaker controls
   socket.on('control:clear', () => {
     if (socket.data.role !== 'speaker') return;
