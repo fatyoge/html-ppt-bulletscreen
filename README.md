@@ -242,7 +242,7 @@ bullet-screen/
 │   └── moderator-panel.js     # 管理者侧边栏
 ├── tests/                     # 单元测试
 │   ├── html-injector.test.js
-│   ├── danmaku-store.test.js
+│   ├── danmaku-store.test.jsnode
 │   └── slide-sync.test.js
 ├── examples/                  # 示例
 │   ├── html-ppt-test.html     # html-ppt 测试幻灯片

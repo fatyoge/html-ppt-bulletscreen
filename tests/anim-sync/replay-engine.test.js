@@ -191,7 +191,7 @@ describe('AnimationReplayEngine', () => {
       id: 'msg-9',
       triggerType: 'anime',
       selector: '#test',
-      payload: { config: { duration: 500, opacity: [0, 1] } }
+      payload: { animeConfig: { duration: 500, opacity: [0, 1] } }
     });
 
     expect(mockAnime).toHaveBeenCalledTimes(1);

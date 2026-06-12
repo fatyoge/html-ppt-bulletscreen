@@ -111,11 +111,41 @@
         selector: resolveGSAPTarget(targets),
         payload: {
           method: 'fromTo',
-          gsapConfig: shallowClone(toVars)
+          gsapConfig: shallowClone(toVars),
+          gsapFromConfig: shallowClone(fromVars)
         }
       });
       return result;
     };
+
+    // Hook gsap.timeline() so chained .to/.from/.fromTo calls are also broadcast.
+    var originalTimeline = gsap.timeline;
+    if (originalTimeline) {
+      gsap.timeline = function(vars) {
+        var tl = originalTimeline.apply(this, arguments);
+        ['to', 'from', 'fromTo'].forEach(function(method) {
+          var originalMethod = tl[method];
+          if (!originalMethod) return;
+          tl[method] = function(targets, varsOrFrom, toVars) {
+            var result = originalMethod.apply(this, arguments);
+            var payload = { method: method };
+            if (method === 'fromTo') {
+              payload.gsapConfig = shallowClone(toVars);
+              payload.gsapFromConfig = shallowClone(varsOrFrom);
+            } else {
+              payload.gsapConfig = shallowClone(varsOrFrom);
+            }
+            broadcast({
+              triggerType: 'gsap',
+              selector: resolveGSAPTarget(targets),
+              payload: payload
+            });
+            return result;
+          };
+        });
+        return tl;
+      };
+    }
 
     gsapInstalled = true;
     console.log('[BS-Anim] GSAP adapter installed');
@@ -162,6 +192,58 @@
     Object.keys(originalAnime).forEach(function(key) {
       window.anime[key] = originalAnime[key];
     });
+
+    // Hook anime.timeline() so the entire chained timeline is captured and
+    // broadcast as one message. Individual .add() steps lose their relative
+    // offsets when replayed as separate anime() calls, so we must preserve
+    // the whole timeline structure.
+    var originalTimeline = originalAnime.timeline;
+    if (originalTimeline) {
+      window.anime.timeline = function(params) {
+        // Preserve the anime object as `this` so the timeline initializes correctly.
+        var realTl = originalTimeline.apply(originalAnime, arguments);
+        var steps = [];
+        var flushTimer = null;
+        var timelineId = 'tl-' + Math.random().toString(36).slice(2, 9);
+
+        function flushTimeline() {
+          flushTimer = null;
+          if (steps.length === 0) return;
+          broadcast({
+            triggerType: 'anime-timeline',
+            selector: '*',
+            payload: {
+              timelineId: timelineId,
+              timelineParams: shallowClone(params),
+              steps: steps.slice()
+            }
+          });
+          steps.length = 0;
+        }
+
+        function scheduleFlush() {
+          if (flushTimer) clearTimeout(flushTimer);
+          flushTimer = setTimeout(flushTimeline, 80);
+        }
+
+        // Hook the timeline's own .add() so chained calls naturally flow through
+        // the wrapper while preserving anime.js's original return value for chaining.
+        var originalAdd = realTl.add;
+        realTl.add = function(animParams, offset) {
+          var result = originalAdd.apply(realTl, arguments);
+          if (animParams) {
+            steps.push({
+              animParams: shallowClone(animParams),
+              offset: offset
+            });
+            scheduleFlush();
+          }
+          return result;
+        };
+
+        return realTl;
+      };
+    }
 
     animeInstalled = true;
     console.log('[BS-Anim] Anime.js adapter installed');

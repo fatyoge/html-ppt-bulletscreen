@@ -43,6 +43,8 @@
   function buildPathSelector(element) {
     var parts = [];
     var current = element;
+    // Skip transient state classes that change during navigation/animation
+    var skipClasses = { 'is-active': true, 'is-prev': true, 'open': true, 'hidden': true };
 
     while (current && current.nodeType === 1 && current !== document.body) {
       var tag = current.tagName.toLowerCase();
@@ -51,7 +53,7 @@
       if (current.classList) {
         for (var i = 0; i < current.classList.length; i++) {
           var cls = current.classList[i];
-          if (cls.indexOf('anim-') !== 0) {
+          if (cls.indexOf('anim-') !== 0 && !skipClasses[cls]) {
             classes.push(cls);
           }
         }

@@ -18,9 +18,16 @@ describe('SlideSync', () => {
     expect(sync.getSpeakerSocketId()).toBe('socket-1');
   });
 
-  test('returns false for subsequent speakers', () => {
+  test('latest speaker wins control', () => {
     sync.setSpeaker('socket-1');
     const result = sync.setSpeaker('socket-2');
+    expect(result).toBe(true);
+    expect(sync.getSpeakerSocketId()).toBe('socket-2');
+  });
+
+  test('re-announcing same speaker returns false', () => {
+    sync.setSpeaker('socket-1');
+    const result = sync.setSpeaker('socket-1');
     expect(result).toBe(false);
     expect(sync.getSpeakerSocketId()).toBe('socket-1');
   });
@@ -56,5 +63,24 @@ describe('SlideSync', () => {
     sync.setControlState({ paused: true, speed: 2.0, density: 8 });
     const state = sync.getControlState();
     expect(state).toEqual({ paused: true, speed: 2.0, density: 8 });
+  });
+
+  test('setSlideTransforms and getSlideTransforms persist transforms', () => {
+    const transforms = [{ path: [1], transform: 'scale(1.5)' }];
+    sync.setSlideTransforms(0, transforms);
+    expect(sync.getSlideTransforms(0)).toEqual(transforms);
+  });
+
+  test('getSlideTransforms returns empty array for unknown slide', () => {
+    expect(sync.getSlideTransforms(99)).toEqual([]);
+  });
+
+  test('getAllSlideTransforms returns all stored transforms', () => {
+    sync.setSlideTransforms(0, [{ path: [1], transform: 'scale(1.5)' }]);
+    sync.setSlideTransforms(2, [{ path: [0], opacity: '0.5' }]);
+    expect(sync.getAllSlideTransforms()).toEqual({
+      0: [{ path: [1], transform: 'scale(1.5)' }],
+      2: [{ path: [0], opacity: '0.5' }]
+    });
   });
 });

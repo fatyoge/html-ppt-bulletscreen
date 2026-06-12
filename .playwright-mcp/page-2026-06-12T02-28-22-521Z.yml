@@ -1,0 +1,41 @@
+- generic [ref=e1]:
+  - heading "Web Animations API Test" [level=1] [ref=e2]
+  - paragraph [ref=e3]: Test WAAPI animations using element.animate(). No external dependencies.
+  - generic [ref=e4]:
+    - heading "Basic Keyframes" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Simple fade, slide+rotate, and pulse scale animations.
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Fade
+        - button "Fade In/Out" [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Slide
+        - button "Slide+Rotate" [active] [ref=e13] [cursor=pointer]
+      - generic [ref=e14]:
+        - generic [ref=e15]: Pulse
+        - button "Pulse Scale" [ref=e16] [cursor=pointer]
+  - generic [ref=e17]:
+    - heading "Complex Keyframes" [level=2] [ref=e18]
+    - paragraph [ref=e19]: Animated path with color change, and a spring effect with multiple bounces.
+    - generic [ref=e20]:
+      - button "Path + Color" [ref=e24] [cursor=pointer]
+      - generic [ref=e25]:
+        - generic [ref=e26]: Spring
+        - button "Spring Bounce" [ref=e27] [cursor=pointer]
+  - generic [ref=e28]:
+    - heading "Property-Indexed Keyframes" [level=2] [ref=e29]
+    - paragraph [ref=e30]: Keyframes where each property has its own array of values, animated with different offsets.
+    - generic [ref=e32]:
+      - generic [ref=e33]: Indexed
+      - button "Property Indexed" [ref=e34] [cursor=pointer]
+  - generic [ref=e35]:
+    - button "清空" [ref=e36] [cursor=pointer]
+    - button "暂停" [ref=e37] [cursor=pointer]
+    - generic [ref=e38]:
+      - generic [ref=e39]: 速度
+      - slider [ref=e40]: "1"
+      - generic [ref=e41]: 1.0x
+    - generic [ref=e42]:
+      - generic [ref=e43]: 密度
+      - slider [ref=e44]: "5"
+      - generic [ref=e45]: "5"

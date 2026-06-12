@@ -1,0 +1,41 @@
+- generic [ref=e1]:
+  - heading "Anime.js Animation Test" [level=1] [ref=e2]
+  - paragraph [ref=e3]: "Test Anime.js animations: translate, rotate, scale, stagger grids, and timelines."
+  - generic [ref=e4]:
+    - heading "Basic Animations" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Translate, rotate, and scale animations using anime().
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Move
+        - button "Translate" [active] [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Rotate
+        - button "Rotate" [ref=e13] [cursor=pointer]
+      - generic [ref=e14]:
+        - generic [ref=e15]: Scale
+        - button "Scale" [ref=e16] [cursor=pointer]
+  - generic [ref=e17]:
+    - heading "Stagger Grid" [level=2] [ref=e18]
+    - paragraph [ref=e19]: 10 small boxes with grid-based stagger animation.
+    - button "Stagger" [ref=e32] [cursor=pointer]
+  - generic [ref=e33]:
+    - heading "Timeline — Chained Animations" [level=2] [ref=e34]
+    - paragraph [ref=e35]: Chain multiple animations on different elements using an Anime.js timeline.
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - generic [ref=e38]: "1"
+        - generic [ref=e39]: "2"
+        - generic [ref=e40]: "3"
+        - generic [ref=e41]: "4"
+      - button "Run Timeline" [ref=e42] [cursor=pointer]
+  - generic [ref=e43]:
+    - button "清空" [ref=e44] [cursor=pointer]
+    - button "暂停" [ref=e45] [cursor=pointer]
+    - generic [ref=e46]:
+      - generic [ref=e47]: 速度
+      - slider [ref=e48]: "1"
+      - generic [ref=e49]: 1.0x
+    - generic [ref=e50]:
+      - generic [ref=e51]: 密度
+      - slider [ref=e52]: "5"
+      - generic [ref=e53]: "5"

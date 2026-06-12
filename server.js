@@ -109,9 +109,11 @@ io.on('connection', (socket) => {
     }
 
     // Send sync state to all new connections
+    const currentIdx = slideSync.getCurrentSlide();
     socket.emit('slide:sync', {
-      idx: slideSync.getCurrentSlide(),
-      total: 0 // Will be determined client-side
+      idx: currentIdx,
+      total: 0, // Will be determined client-side
+      transforms: slideSync.getSlideTransforms(currentIdx)
     });
     socket.emit('control:state', slideSync.getControlState());
   });
@@ -181,11 +183,14 @@ io.on('connection', (socket) => {
   });
 
   // Slide navigation
-  socket.on('slide:go', ({ idx }) => {
+  socket.on('slide:go', ({ idx, transforms }) => {
     if (socket.data.role !== 'speaker') return;
     const success = slideSync.setSlide(idx, socket.id);
     if (success) {
-      socket.broadcast.emit('slide:go', { idx });
+      if (transforms && transforms.length) {
+        slideSync.setSlideTransforms(idx, transforms);
+      }
+      socket.broadcast.emit('slide:go', { idx, transforms });
     }
   });
 

@@ -234,6 +234,49 @@
     `;
     document.body.appendChild(controls);
 
+    // Bottom hover trigger zone
+    const trigger = document.createElement('div');
+    trigger.id = 'speaker-controls-trigger';
+    document.body.appendChild(trigger);
+
+    // Hover interaction: show after dwelling on trigger, hide after leaving controls
+    let showTimer = null;
+    let hideTimer = null;
+
+    function showControls() {
+      clearTimeout(hideTimer);
+      controls.classList.add('visible');
+    }
+
+    function hideControls() {
+      clearTimeout(showTimer);
+      hideTimer = setTimeout(() => {
+        controls.classList.remove('visible');
+      }, 1500);
+    }
+
+    trigger.addEventListener('mouseenter', () => {
+      clearTimeout(hideTimer);
+      showTimer = setTimeout(() => {
+        controls.classList.add('visible');
+      }, 400);
+    });
+
+    trigger.addEventListener('mouseleave', () => {
+      clearTimeout(showTimer);
+    });
+
+    controls.addEventListener('mouseenter', () => {
+      clearTimeout(hideTimer);
+      controls.classList.add('visible');
+    });
+
+    controls.addEventListener('mouseleave', () => {
+      hideTimer = setTimeout(() => {
+        controls.classList.remove('visible');
+      }, 1500);
+    });
+
     document.getElementById('btn-clear').addEventListener('click', () => {
       socket.emit('control:clear');
     });

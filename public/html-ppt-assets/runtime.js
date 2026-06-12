@@ -268,6 +268,9 @@
       }
     }
 
+    // Expose globally so slide-sync.js can delegate to runtime navigation
+    window.go = go;
+
     /* ===== listen for remote navigation / theme changes ===== */
     if (bc) {
       bc.onmessage = function(e) {
@@ -936,8 +939,8 @@
       switch (e.key) {
         case 'ArrowRight': case ' ': case 'PageDown': case 'Enter': go(idx+1); e.preventDefault(); break;
         case 'ArrowLeft': case 'PageUp': case 'Backspace': go(idx-1); e.preventDefault(); break;
-        case 'Home': go(0); break;
-        case 'End': go(total-1); break;
+        case 'Home': go(0); e.preventDefault(); break;
+        case 'End': go(total-1); e.preventDefault(); break;
         case 'f': case 'F': fullscreen(); break;
         case 's': case 'S': openPresenterWindow(); break;
         case 'n': case 'N': toggleNotes(); break;

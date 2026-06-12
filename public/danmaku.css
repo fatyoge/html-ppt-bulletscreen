@@ -55,6 +55,26 @@
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
   font-size: 13px;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+#speaker-controls.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Bottom hover trigger zone */
+#speaker-controls-trigger {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  z-index: 9999;
+  pointer-events: auto;
+  cursor: default;
 }
 
 #speaker-controls button {

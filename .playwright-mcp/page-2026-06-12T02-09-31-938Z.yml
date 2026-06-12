@@ -1,0 +1,58 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic:
+      - generic:
+        - generic: 弹幕测试
+        - generic: "2026"
+      - paragraph: 实时弹幕演示
+      - heading "欢迎使用弹幕服务器" [level=1]
+      - paragraph: 按 → 或空格翻页，发送弹幕测试实时效果
+      - generic:
+        - generic: 弹幕系统测试
+        - generic: 3 / 4
+    - generic:
+      - paragraph: Features
+      - heading "核心功能" [level=2]
+      - generic:
+        - generic:
+          - heading "实时弹幕" [level=4]
+          - paragraph: 观众发送的文字实时飘过屏幕。
+        - generic:
+          - heading "翻页同步" [level=4]
+          - paragraph: 演讲者翻页，所有观众自动跟随。
+        - generic:
+          - heading "管理者审核" [level=4]
+          - paragraph: 弹幕需审核通过后才显示。
+      - generic:
+        - generic: features
+        - generic: 2 / 4
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - paragraph [ref=e37]: Test
+        - generic [ref=e38]: 100%
+        - heading "弹幕覆盖效果测试" [level=3] [ref=e39]
+        - paragraph [ref=e40]: 发送弹幕，观察文字飘过效果。
+      - generic:
+        - generic: test
+        - generic: 3 / 4
+    - generic:
+      - generic:
+        - heading "Thanks" [level=1]
+        - paragraph: 测试结束
+        - paragraph: ←/→ 翻页 · T 主题 · F 全屏 · S 备注
+      - generic:
+        - generic: end
+        - generic: 4 / 4
+  - generic [ref=e9]: 第三页，测试弹幕覆盖在复杂内容上的可见性。
+  - text: 1 / 4 2 / 4 3 / 4 4 / 4
+  - generic [ref=e10]:
+    - button "清空" [ref=e11] [cursor=pointer]
+    - button "暂停" [ref=e12] [cursor=pointer]
+    - generic [ref=e13]:
+      - generic [ref=e14]: 速度
+      - slider [ref=e15]: "1"
+      - generic [ref=e16]: 1.0x
+    - generic [ref=e17]:
+      - generic [ref=e18]: 密度
+      - slider [ref=e19]: "5"
+      - generic [ref=e20]: "5"

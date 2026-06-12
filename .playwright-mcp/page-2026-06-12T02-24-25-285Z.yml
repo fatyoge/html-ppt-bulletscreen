@@ -1,0 +1,48 @@
+- generic [ref=e1]:
+  - heading "GSAP Animation Test" [level=1] [ref=e2]
+  - paragraph [ref=e3]: "Test GSAP animations: gsap.to, gsap.from, timelines, and stagger effects."
+  - generic [ref=e4]:
+    - heading "gsap.to — Move Right, Rotate + Scale" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Animate elements to a new state using gsap.to().
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Move
+        - button "Move Right" [active] [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Rotate
+        - button "Rotate+Scale" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]:
+    - heading "gsap.from — Fade In from Invisible" [level=2] [ref=e15]
+    - paragraph [ref=e16]: Animate elements from an initial state using gsap.from().
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]: From
+        - button "Fade In" [ref=e20] [cursor=pointer]
+      - generic [ref=e21]:
+        - generic [ref=e22]: From
+        - button "Elastic In" [ref=e23] [cursor=pointer]
+  - generic [ref=e24]:
+    - heading "Timeline — Chained Animations" [level=2] [ref=e25]
+    - paragraph [ref=e26]: Chain multiple animations on different elements using a GSAP timeline.
+    - generic [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e29]: "1"
+        - generic [ref=e30]: "2"
+        - generic [ref=e31]: "3"
+        - generic [ref=e32]: "4"
+      - button "Run Timeline" [ref=e33] [cursor=pointer]
+  - generic [ref=e34]:
+    - heading "Stagger — Grid Animation" [level=2] [ref=e35]
+    - paragraph [ref=e36]: Animate a grid of elements with staggered delays.
+    - button "Stagger" [ref=e49] [cursor=pointer]
+  - generic [ref=e50]:
+    - button "清空" [ref=e51] [cursor=pointer]
+    - button "暂停" [ref=e52] [cursor=pointer]
+    - generic [ref=e53]:
+      - generic [ref=e54]: 速度
+      - slider [ref=e55]: "1"
+      - generic [ref=e56]: 1.0x
+    - generic [ref=e57]:
+      - generic [ref=e58]: 密度
+      - slider [ref=e59]: "5"
+      - generic [ref=e60]: "5"

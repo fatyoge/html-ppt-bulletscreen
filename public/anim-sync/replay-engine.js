@@ -12,6 +12,7 @@
       'waapi': handleWaapi,
       'gsap': handleGsap,
       'anime': handleAnime,
+      'anime-timeline': handleAnimeTimeline,
       'lottie': handleLottie,
       'declarative': handleDeclarative
     };
@@ -73,7 +74,11 @@
       console.warn('[BS-Anim] GSAP not available for gsap trigger');
       return;
     }
-    gsap[payload.method](el, payload.config);
+    if (payload.method === 'fromTo' && payload.gsapFromConfig) {
+      gsap.fromTo(el, payload.gsapFromConfig, payload.gsapConfig);
+    } else {
+      gsap[payload.method](el, payload.gsapConfig);
+    }
   }
 
   function handleAnime(el, payload) {
@@ -81,8 +86,38 @@
       console.warn('[BS-Anim] anime.js not available for anime trigger');
       return;
     }
-    var config = Object.assign({}, payload.config, { targets: el });
+    var config = Object.assign({}, payload.animeConfig);
+    var originalTargets = config.targets;
+    // Preserve string selectors or arrays of selectors from the speaker.
+    // Only fall back to the resolved element when the original target was
+    // an Element (removed by shallowClone) or otherwise unusable.
+    if (!(typeof originalTargets === 'string' && originalTargets.trim()) &&
+        !(Array.isArray(originalTargets) && originalTargets.length > 0)) {
+      config.targets = el;
+    }
     anime(config);
+  }
+
+  function handleAnimeTimeline(el, payload) {
+    if (typeof anime === 'undefined') {
+      console.warn('[BS-Anim] anime.js not available for anime-timeline trigger');
+      return;
+    }
+    if (!payload || !Array.isArray(payload.steps)) {
+      console.warn('[BS-Anim] Invalid anime-timeline payload');
+      return;
+    }
+
+    var tl = anime.timeline(payload.timelineParams || {});
+    payload.steps.forEach(function(step) {
+      var animParams = Object.assign({}, step.animParams);
+      var originalTargets = animParams.targets;
+      if (!(typeof originalTargets === 'string' && originalTargets.trim()) &&
+          !(Array.isArray(originalTargets) && originalTargets.length > 0)) {
+        animParams.targets = el;
+      }
+      tl.add(animParams, step.offset);
+    });
   }
 
   function handleLottie(el, payload) {

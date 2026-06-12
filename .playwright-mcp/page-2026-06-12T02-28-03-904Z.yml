@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - heading "Web Animations API Test" [level=1] [ref=e2]
+  - paragraph [ref=e3]: Test WAAPI animations using element.animate(). No external dependencies.
+  - generic [ref=e4]:
+    - heading "Basic Keyframes" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Simple fade, slide+rotate, and pulse scale animations.
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Fade
+        - button "Fade In/Out" [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Slide
+        - button "Slide+Rotate" [ref=e13] [cursor=pointer]
+      - generic [ref=e14]:
+        - generic [ref=e15]: Pulse
+        - button "Pulse Scale" [ref=e16] [cursor=pointer]
+  - generic [ref=e17]:
+    - heading "Complex Keyframes" [level=2] [ref=e18]
+    - paragraph [ref=e19]: Animated path with color change, and a spring effect with multiple bounces.
+    - generic [ref=e20]:
+      - button "Path + Color" [ref=e24] [cursor=pointer]
+      - generic [ref=e25]:
+        - generic [ref=e26]: Spring
+        - button "Spring Bounce" [ref=e27] [cursor=pointer]
+  - generic [ref=e28]:
+    - heading "Property-Indexed Keyframes" [level=2] [ref=e29]
+    - paragraph [ref=e30]: Keyframes where each property has its own array of values, animated with different offsets.
+    - generic [ref=e32]:
+      - generic [ref=e33]: Indexed
+      - button "Property Indexed" [ref=e34] [cursor=pointer]
+  - generic [ref=e35]:
+    - generic "收起/展开" [ref=e36] [cursor=pointer]: ▶
+    - generic [ref=e37]: 发送弹幕
+    - generic [ref=e39]:
+      - textbox "输入弹幕内容..." [ref=e40]
+      - generic [ref=e41]:
+        - generic "白" [ref=e42] [cursor=pointer]
+        - generic "红" [ref=e43] [cursor=pointer]
+        - generic "黄" [ref=e44] [cursor=pointer]
+        - generic "绿" [ref=e45] [cursor=pointer]
+        - generic "青" [ref=e46] [cursor=pointer]
+        - generic "蓝" [ref=e47] [cursor=pointer]
+        - generic "粉" [ref=e48] [cursor=pointer]
+        - generic "橙" [ref=e49] [cursor=pointer]
+      - button "发送" [ref=e50] [cursor=pointer]

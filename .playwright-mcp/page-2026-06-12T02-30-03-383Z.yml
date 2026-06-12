@@ -1,0 +1,51 @@
+- generic [active] [ref=e1]:
+  - heading "Declarative Annotation Test" [level=1] [ref=e2]
+  - paragraph [ref=e3]: Test data-bs-sync-anim annotations with hover, click, visible, and auto triggers.
+  - generic [ref=e4]:
+    - heading "Hover Trigger" [level=2] [ref=e5]
+    - paragraph [ref=e6]:
+      - text: Cards with
+      - code [ref=e7]: data-bs-sync-anim="hover-glow" data-bs-sync-trigger="hover"
+      - text: that glow on hover.
+    - generic [ref=e8]:
+      - generic [ref=e10] [cursor=pointer]: Hover Me
+      - generic [ref=e12] [cursor=pointer]: Hover Me
+      - generic [ref=e14] [cursor=pointer]: Hover Me
+  - generic [ref=e15]:
+    - heading "Click Trigger" [level=2] [ref=e16]
+    - paragraph [ref=e17]:
+      - text: Button with
+      - code [ref=e18]: data-bs-sync-anim="click-pulse" data-bs-sync-trigger="click"
+      - text: that pulses on click.
+    - generic [ref=e19]:
+      - button "Click Me" [ref=e21] [cursor=pointer]
+      - button "Click Me" [ref=e23] [cursor=pointer]
+  - generic [ref=e24]:
+    - heading "Visible Trigger (IntersectionObserver)" [level=2] [ref=e25]
+    - paragraph [ref=e26]: Scroll down to see the element animate when it enters the viewport.
+  - generic [ref=e27]: Scroll down to reveal the animated element
+  - generic [ref=e31]: I was hidden!
+  - generic [ref=e32]:
+    - heading "Auto Trigger" [level=2] [ref=e33]
+    - paragraph [ref=e34]:
+      - text: Element with
+      - code [ref=e35]: data-bs-sync-anim="reveal-up" data-bs-sync-trigger="auto"
+      - text: . Click the button to add the animation class.
+    - generic [ref=e37]:
+      - generic [ref=e38]: Auto Target
+      - button "Trigger Animation" [ref=e39] [cursor=pointer]
+  - generic [ref=e40]:
+    - generic "收起/展开" [ref=e41] [cursor=pointer]: ▶
+    - generic [ref=e42]: 发送弹幕
+    - generic [ref=e44]:
+      - textbox "输入弹幕内容..." [ref=e45]
+      - generic [ref=e46]:
+        - generic "白" [ref=e47] [cursor=pointer]
+        - generic "红" [ref=e48] [cursor=pointer]
+        - generic "黄" [ref=e49] [cursor=pointer]
+        - generic "绿" [ref=e50] [cursor=pointer]
+        - generic "青" [ref=e51] [cursor=pointer]
+        - generic "蓝" [ref=e52] [cursor=pointer]
+        - generic "粉" [ref=e53] [cursor=pointer]
+        - generic "橙" [ref=e54] [cursor=pointer]
+      - button "发送" [ref=e55] [cursor=pointer]

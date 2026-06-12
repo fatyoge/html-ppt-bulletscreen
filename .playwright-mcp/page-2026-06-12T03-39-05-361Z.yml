@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - heading "Anime.js Animation Test" [level=1] [ref=e2]
+  - paragraph [ref=e3]: "Test Anime.js animations: translate, rotate, scale, stagger grids, and timelines."
+  - generic [ref=e4]:
+    - heading "Basic Animations" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Translate, rotate, and scale animations using anime().
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Move
+        - button "Translate" [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Rotate
+        - button "Rotate" [ref=e13] [cursor=pointer]
+      - generic [ref=e14]:
+        - generic [ref=e15]: Scale
+        - button "Scale" [ref=e16] [cursor=pointer]
+  - generic [ref=e17]:
+    - heading "Stagger Grid" [level=2] [ref=e18]
+    - paragraph [ref=e19]: 10 small boxes with grid-based stagger animation.
+    - button "Stagger" [ref=e32] [cursor=pointer]
+  - generic [ref=e33]:
+    - heading "Timeline — Chained Animations" [level=2] [ref=e34]
+    - paragraph [ref=e35]: Chain multiple animations on different elements using an Anime.js timeline.
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - generic [ref=e38]: "1"
+        - generic [ref=e39]: "2"
+        - generic [ref=e40]: "3"
+        - generic [ref=e41]: "4"
+      - button "Run Timeline" [ref=e42] [cursor=pointer]
+  - generic [ref=e43]:
+    - generic "收起/展开" [ref=e44] [cursor=pointer]: ▶
+    - generic [ref=e45]: 发送弹幕
+    - generic [ref=e47]:
+      - textbox "输入弹幕内容..." [ref=e48]
+      - generic [ref=e49]:
+        - generic "白" [ref=e50] [cursor=pointer]
+        - generic "红" [ref=e51] [cursor=pointer]
+        - generic "黄" [ref=e52] [cursor=pointer]
+        - generic "绿" [ref=e53] [cursor=pointer]
+        - generic "青" [ref=e54] [cursor=pointer]
+        - generic "蓝" [ref=e55] [cursor=pointer]
+        - generic "粉" [ref=e56] [cursor=pointer]
+        - generic "橙" [ref=e57] [cursor=pointer]
+      - button "发送" [ref=e58] [cursor=pointer]

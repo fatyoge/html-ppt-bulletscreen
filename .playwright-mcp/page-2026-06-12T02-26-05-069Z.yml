@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - heading "CSS Animation + Transition Test" [level=1] [ref=e2]
+  - paragraph [ref=e3]: Test CSS @keyframes animations and transitions. Click buttons to trigger animations on the demo boxes.
+  - generic [ref=e4]:
+    - heading "@keyframes Animations" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Four different keyframe animations triggered by adding/removing animation classes.
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Fade
+        - button "Fade In" [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Slide
+        - button "Slide In" [ref=e13] [cursor=pointer]
+      - generic [ref=e14]:
+        - generic [ref=e15]: Bounce
+        - button "Bounce" [ref=e16] [cursor=pointer]
+      - generic [ref=e17]:
+        - generic [ref=e18]: Rotate
+        - button "Rotate+Scale" [ref=e19] [cursor=pointer]
+  - generic [ref=e20]:
+    - heading "CSS Transitions" [level=2] [ref=e21]
+    - paragraph [ref=e22]: Click each box to toggle its expanded state. Transitions animate width, height, border-radius, and rotation.
+    - generic [ref=e23]:
+      - generic [ref=e25] [cursor=pointer]: Click Me
+      - generic [ref=e27] [cursor=pointer]: Click Me
+      - generic [ref=e29] [cursor=pointer]: Click Me
+  - generic [ref=e30]:
+    - heading "Multi-class Combined Animation" [level=2] [ref=e31]
+    - paragraph [ref=e32]: Combined fade-in + slide-in effect using a single keyframe animation with multiple transforms.
+    - generic [ref=e34]:
+      - generic [ref=e35]: Combined
+      - button "Trigger" [ref=e36] [cursor=pointer]
+  - generic [ref=e37]:
+    - generic "收起/展开" [ref=e38] [cursor=pointer]: ▶
+    - generic [ref=e39]: 发送弹幕
+    - generic [ref=e41]:
+      - textbox "输入弹幕内容..." [ref=e42]
+      - generic [ref=e43]:
+        - generic "白" [ref=e44] [cursor=pointer]
+        - generic "红" [ref=e45] [cursor=pointer]
+        - generic "黄" [ref=e46] [cursor=pointer]
+        - generic "绿" [ref=e47] [cursor=pointer]
+        - generic "青" [ref=e48] [cursor=pointer]
+        - generic "蓝" [ref=e49] [cursor=pointer]
+        - generic "粉" [ref=e50] [cursor=pointer]
+        - generic "橙" [ref=e51] [cursor=pointer]
+      - button "发送" [ref=e52] [cursor=pointer]

@@ -1,0 +1,13 @@
+- generic [active] [ref=e1]:
+  - heading "第二页" [level=1] [ref=e18]
+  - generic [ref=e5]:
+    - button "清空" [ref=e6] [cursor=pointer]
+    - button "暂停" [ref=e7] [cursor=pointer]
+    - generic [ref=e8]:
+      - generic [ref=e9]: 速度
+      - slider [ref=e10]: "1"
+      - generic [ref=e11]: 1.0x
+    - generic [ref=e12]:
+      - generic [ref=e13]: 密度
+      - slider [ref=e14]: "5"
+      - generic [ref=e15]: "5"
