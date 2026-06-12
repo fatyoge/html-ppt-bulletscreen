@@ -182,6 +182,67 @@ describe('AnimationReplayEngine', () => {
     );
   });
 
+  test('GSAP replay uses original selector to target all matched elements', () => {
+    document.body.innerHTML = `
+      <div id="grid">
+        <div class="cell"></div>
+        <div class="cell"></div>
+      </div>
+    `;
+    const mockGsap = {
+      fromTo: jest.fn(),
+      to: jest.fn()
+    };
+    window.gsap = mockGsap;
+
+    engine.handleMessage({
+      id: 'msg-gsap-multi',
+      triggerType: 'gsap',
+      selector: '#grid .cell',
+      payload: {
+        method: 'fromTo',
+        gsapFromConfig: { scale: 0 },
+        gsapConfig: { scale: 1, duration: 0.5 }
+      }
+    });
+
+    expect(mockGsap.fromTo).toHaveBeenCalledTimes(1);
+    expect(mockGsap.fromTo).toHaveBeenCalledWith(
+      '#grid .cell',
+      { scale: 0 },
+      { scale: 1, duration: 0.5 }
+    );
+  });
+
+  test('GSAP timeline replay rebuilds timeline with steps and positions', () => {
+    document.body.innerHTML = '<div id="box"></div>';
+    const timelineMock = {
+      to: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      fromTo: jest.fn().mockReturnThis()
+    };
+    window.gsap = {
+      timeline: jest.fn(() => timelineMock)
+    };
+
+    engine.handleMessage({
+      id: 'msg-timeline',
+      triggerType: 'gsap-timeline',
+      selector: '*',
+      payload: {
+        timelineParams: {},
+        steps: [
+          { method: 'to', selector: '#box', gsapConfig: { x: 100 }, position: '+=0.5' },
+          { method: 'fromTo', selector: '#box', gsapFromConfig: { opacity: 0 }, gsapConfig: { opacity: 1 }, position: '-=0.2' }
+        ]
+      }
+    });
+
+    expect(window.gsap.timeline).toHaveBeenCalledTimes(1);
+    expect(timelineMock.to).toHaveBeenCalledWith('#box', { x: 100 }, '+=0.5');
+    expect(timelineMock.fromTo).toHaveBeenCalledWith('#box', { opacity: 0 }, { opacity: 1 }, '-=0.2');
+  });
+
   test('anime replay when anime.js is available: calls anime with targets', () => {
     document.body.innerHTML = '<div id="test"></div>';
     const mockAnime = jest.fn();

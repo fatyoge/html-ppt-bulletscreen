@@ -42,6 +42,12 @@
         if (val instanceof Element) {
           continue;
         }
+        // GSAP mutates animation vars to add a `parent` reference back to the
+        // Timeline instance. Timeline objects contain circular references that
+        // cannot be serialized by Socket.IO, so strip `parent` before broadcast.
+        if (key === 'parent') {
+          continue;
+        }
         cloned[key] = val;
       }
     }
@@ -59,8 +65,17 @@
     if (targets instanceof Element) {
       return getSelector(targets);
     }
-    if (targets && targets.length && targets[0] instanceof Element) {
-      return getSelector(targets[0]);
+    if (targets && typeof targets.length === 'number' && targets.length > 0 && targets[0] instanceof Element) {
+      // NodeList / HTMLCollection / array of elements: build a selector list so
+      // the audience replay targets the same set of elements.
+      var selectors = [];
+      for (var i = 0; i < targets.length; i++) {
+        var sel = getSelector(targets[i]);
+        if (sel && selectors.indexOf(sel) === -1) {
+          selectors.push(sel);
+        }
+      }
+      return selectors.length > 0 ? selectors.join(', ') : '*';
     }
     return '*';
   }
@@ -118,29 +133,60 @@
       return result;
     };
 
-    // Hook gsap.timeline() so chained .to/.from/.fromTo calls are also broadcast.
+    // Hook gsap.timeline() so the whole chained timeline is captured and
+    // broadcast as one message. Replaying individual .to/.from/.fromTo calls
+    // separately loses their relative offsets, so we must preserve the timeline
+    // structure and flush after the synchronous chain of calls finishes.
     var originalTimeline = gsap.timeline;
     if (originalTimeline) {
       gsap.timeline = function(vars) {
         var tl = originalTimeline.apply(this, arguments);
+        var steps = [];
+        var flushTimer = null;
+        var timelineId = 'gstl-' + Math.random().toString(36).slice(2, 9);
+
+        function flushTimeline() {
+          flushTimer = null;
+          if (steps.length === 0) return;
+          broadcast({
+            triggerType: 'gsap-timeline',
+            selector: '*',
+            payload: {
+              timelineId: timelineId,
+              timelineParams: shallowClone(vars),
+              steps: steps.slice()
+            }
+          });
+          steps.length = 0;
+        }
+
+        function scheduleFlush() {
+          if (flushTimer) clearTimeout(flushTimer);
+          flushTimer = setTimeout(flushTimeline, 0);
+        }
+
         ['to', 'from', 'fromTo'].forEach(function(method) {
           var originalMethod = tl[method];
           if (!originalMethod) return;
           tl[method] = function(targets, varsOrFrom, toVars) {
-            var result = originalMethod.apply(this, arguments);
-            var payload = { method: method };
+            // Capture clean copies of the vars (and position) BEFORE GSAP mutates
+            // them, e.g. adding a `parent` reference to the Timeline instance.
+            var step = { method: method, selector: resolveGSAPTarget(targets) };
             if (method === 'fromTo') {
-              payload.gsapConfig = shallowClone(toVars);
-              payload.gsapFromConfig = shallowClone(varsOrFrom);
+              step.gsapConfig = shallowClone(toVars);
+              step.gsapFromConfig = shallowClone(varsOrFrom);
+              if (arguments.length > 3) {
+                step.position = arguments[3];
+              }
             } else {
-              payload.gsapConfig = shallowClone(varsOrFrom);
+              step.gsapConfig = shallowClone(varsOrFrom);
+              if (arguments.length > 2) {
+                step.position = arguments[2];
+              }
             }
-            broadcast({
-              triggerType: 'gsap',
-              selector: resolveGSAPTarget(targets),
-              payload: payload
-            });
-            return result;
+            steps.push(step);
+            scheduleFlush();
+            return originalMethod.apply(this, arguments);
           };
         });
         return tl;

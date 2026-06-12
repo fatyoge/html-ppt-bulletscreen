@@ -27,17 +27,38 @@
       return '#' + CSS.escape(element.id);
     }
 
-    // Priority 2: data-* attribute (except data-anim)
+    // Priority 2: data-* attribute (except data-anim), but only if it uniquely
+    // identifies the element. Shared data attributes like data-bs-sync-anim would
+    // otherwise resolve to the first matching element on the audience side.
     var dataAttrs = element.attributes;
     for (var i = 0; i < dataAttrs.length; i++) {
       var attr = dataAttrs[i];
       if (attr.name.indexOf('data-') === 0 && attr.name !== 'data-anim') {
-        return '[' + attr.name + '="' + attr.value.replace(/"/g, '\\"') + '"]';
+        var selector = '[' + attr.name + '="' + attr.value.replace(/"/g, '\\"') + '"]';
+        if (isUniqueSelector(selector, element)) {
+          return selector;
+        }
       }
     }
 
     // Priority 3: path selector using tag + classes (excluding anim-*) + :nth-of-type
     return buildPathSelector(element);
+  }
+
+  function isUniqueSelector(selector, element) {
+    if (typeof document === 'undefined') {
+      return true;
+    }
+    // Detached test elements are unique by definition.
+    if (!document.contains(element)) {
+      return true;
+    }
+    try {
+      var matches = document.querySelectorAll(selector);
+      return matches.length === 1 && matches[0] === element;
+    } catch (e) {
+      return false;
+    }
   }
 
   function buildPathSelector(element) {
@@ -53,9 +74,13 @@
       if (current.classList) {
         for (var i = 0; i < current.classList.length; i++) {
           var cls = current.classList[i];
-          if (cls.indexOf('anim-') !== 0 && !skipClasses[cls]) {
-            classes.push(cls);
+          // Skip animation-utility classes as well as transient state classes like
+          // hover-glow-active / click-pulse-active that are applied during playback
+          // and would make the selector unusable on the audience side.
+          if (cls.indexOf('anim-') === 0 || cls.slice(-7) === '-active' || skipClasses[cls]) {
+            continue;
           }
+          classes.push(cls);
         }
       }
 

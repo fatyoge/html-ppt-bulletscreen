@@ -11,6 +11,7 @@
       'style-change': handleStyleChange,
       'waapi': handleWaapi,
       'gsap': handleGsap,
+      'gsap-timeline': handleGsapTimeline,
       'anime': handleAnime,
       'anime-timeline': handleAnimeTimeline,
       'lottie': handleLottie,
@@ -42,7 +43,7 @@
       return;
     }
 
-    handler(el, msg.payload);
+    handler(el, msg.payload, msg);
   };
 
   function handleClassAdd(el, payload) {
@@ -69,16 +70,60 @@
     el.animate(payload.keyframes, payload.options);
   }
 
-  function handleGsap(el, payload) {
+  function handleGsap(el, payload, msg) {
     if (typeof gsap === 'undefined') {
       console.warn('[BS-Anim] GSAP not available for gsap trigger');
       return;
     }
-    if (payload.method === 'fromTo' && payload.gsapFromConfig) {
-      gsap.fromTo(el, payload.gsapFromConfig, payload.gsapConfig);
-    } else {
-      gsap[payload.method](el, payload.gsapConfig);
+
+    // Prefer the original selector so multi-element selectors (e.g.
+    // '#grid .cell') replay on all matched elements, not just the first one.
+    var targets = el;
+    if (msg && msg.selector) {
+      try {
+        if (document.querySelectorAll(msg.selector).length > 0) {
+          targets = msg.selector;
+        }
+      } catch (e) {
+        // Invalid selector; fall back to resolved element.
+      }
     }
+
+    if (payload.method === 'fromTo' && payload.gsapFromConfig) {
+      gsap.fromTo(targets, payload.gsapFromConfig, payload.gsapConfig);
+    } else if (payload.method && typeof gsap[payload.method] === 'function') {
+      gsap[payload.method](targets, payload.gsapConfig);
+    }
+  }
+
+  function handleGsapTimeline(el, payload) {
+    if (typeof gsap === 'undefined') {
+      console.warn('[BS-Anim] GSAP not available for gsap-timeline trigger');
+      return;
+    }
+    if (!payload || !Array.isArray(payload.steps)) {
+      console.warn('[BS-Anim] Invalid gsap-timeline payload');
+      return;
+    }
+
+    var tl = gsap.timeline(payload.timelineParams || {});
+    payload.steps.forEach(function(step) {
+      var method = step.method;
+      var position = step.position;
+      if (method === 'fromTo' && step.gsapFromConfig) {
+        if (position !== undefined) {
+          tl.fromTo(step.selector, step.gsapFromConfig, step.gsapConfig, position);
+        } else {
+          tl.fromTo(step.selector, step.gsapFromConfig, step.gsapConfig);
+        }
+      } else if (method && typeof tl[method] === 'function') {
+        if (position !== undefined) {
+          tl[method](step.selector, step.gsapConfig, position);
+        } else {
+          tl[method](step.selector, step.gsapConfig);
+        }
+      }
+    });
   }
 
   function handleAnime(el, payload) {

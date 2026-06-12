@@ -94,6 +94,26 @@ describe('getStableSelector', () => {
     expect(getStableSelector(el)).toBe('[data-step="2"]');
   });
 
+  test('falls back to unique path when data attribute is shared by multiple elements', () => {
+    const parent = document.createElement('div');
+    const child1 = document.createElement('div');
+    const child2 = document.createElement('div');
+    child1.setAttribute('data-bs-sync-anim', 'hover-glow');
+    child2.setAttribute('data-bs-sync-anim', 'hover-glow');
+    parent.appendChild(child1);
+    parent.appendChild(child2);
+    document.body.appendChild(parent);
+
+    const sel1 = getStableSelector(child1);
+    const sel2 = getStableSelector(child2);
+
+    expect(sel1).not.toBe(sel2);
+    expect(document.querySelector(sel1)).toBe(child1);
+    expect(document.querySelector(sel2)).toBe(child2);
+
+    document.body.removeChild(parent);
+  });
+
   test('skips data-anim attribute', () => {
     const el = document.createElement('div');
     el.setAttribute('data-anim', 'fade');
