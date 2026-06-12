@@ -8,6 +8,7 @@ const QRCode = require('qrcode');
 const { injectHtml } = require('./lib/html-injector');
 const { DanmakuStore } = require('./lib/danmaku-store');
 const { SlideSync } = require('./lib/slide-sync');
+const { generateToken, validateToken, parseCookie, buildSpeakerCookie } = require('./lib/speaker-auth');
 
 const HTML_FILE = process.argv[2];
 if (!HTML_FILE) {
@@ -89,15 +90,32 @@ async function startCloudflareTunnel(port) {
 
 const store = new DanmakuStore();
 const slideSync = new SlideSync();
+const speakerToken = generateToken();
 
 io.on('connection', (socket) => {
   // Wait for role announcement
   socket.on('role', (role) => {
+    if (typeof role !== 'string') {
+      role = 'audience';
+    }
+
+    const cookies = parseCookie(socket.handshake.headers.cookie);
+    const cookieToken = cookies.bs_speaker_token;
+
+    // Reject speaker role if the cookie token is missing or invalid.
+    if (role === 'speaker' && !validateToken(cookieToken, speakerToken)) {
+      socket.data.role = 'audience';
+      socket.emit('speaker:status', { hasControl: false });
+      return;
+    }
+
     socket.data.role = role;
 
     if (role === 'speaker') {
       const isFirst = slideSync.setSpeaker(socket.id);
       socket.emit('speaker:status', { hasControl: isFirst });
+    } else {
+      socket.emit('speaker:status', { hasControl: false });
     }
 
     if (role === 'moderator') {
@@ -280,6 +298,21 @@ httpServer.listen(PORT, async () => {
   });
 
   app.get('/speaker', (req, res) => {
+    const queryToken = req.query.token;
+    const cookies = parseCookie(req.headers.cookie);
+    const cookieToken = cookies.bs_speaker_token;
+
+    // First entry: valid token in query sets the cookie and redirects to clean URL.
+    if (validateToken(queryToken, speakerToken)) {
+      res.setHeader('Set-Cookie', buildSpeakerCookie(queryToken));
+      return res.redirect('/speaker');
+    }
+
+    // Subsequent visits: require valid cookie.
+    if (!validateToken(cookieToken, speakerToken)) {
+      return res.redirect('/');
+    }
+
     const html = injectHtml(originalHtml, 'speaker', '', publicUrl, lanUrl, qrDataUrl);
     res.send(html);
   });
@@ -296,12 +329,13 @@ httpServer.listen(PORT, async () => {
 
   console.log('\n🎯 弹幕服务器已启动\n');
   console.log(`局域网访问：`);
-  console.log(`  演讲者: ${lanUrl}/speaker`);
+  console.log(`  演讲者: ${lanUrl}/speaker?token=${speakerToken}`);
   console.log(`  管理者: ${lanUrl}/moderator`);
   console.log(`  观众:   ${lanUrl}/\n`);
   if (publicUrl) {
     console.log(`外网访问：`);
     console.log(`  观众:   ${publicUrl}/\n`);
   }
-  console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗\n`);
+  console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗`);
+  console.log(`  提示：演讲者链接已包含 token，请妥善保管\n`);
 });
