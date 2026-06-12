@@ -84,7 +84,7 @@ node server.js ~/my-talk/index.html
 🎯 弹幕服务器已启动
 
 局域网访问：
-  演讲者: http://192.168.3.48:3000/speaker
+  演讲者: http://192.168.3.48:3000/speaker?token=abcd1234...
   管理者: http://192.168.3.48:3000/moderator
   观众:   http://192.168.3.48:3000/
 
@@ -110,6 +110,18 @@ node server.js ~/my-talk/index.html
 > ```
 >
 > 未安装 cloudflared 时仅提供局域网访问，不生成外网链接。
+
+### 演讲者入口
+
+启动后控制台会输出类似：
+
+```
+演讲者: http://192.168.3.48:3000/speaker?token=abcd1234...
+```
+
+请复制这条**带 token** 的链接在演讲者设备上打开。首次访问会自动种下 cookie 并跳转到干净的 `/speaker`。
+
+直接访问 `http://<host>/speaker`（不带 token 或 cookie 已过期）会自动跳转到观众页面。
 
 ### 使用流程
 
