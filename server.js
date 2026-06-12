@@ -95,11 +95,27 @@ const speakerToken = generateToken();
 io.on('connection', (socket) => {
   // Wait for role announcement
   socket.on('role', (role) => {
+    if (typeof role !== 'string') {
+      role = 'audience';
+    }
+
+    const cookies = parseCookie(socket.handshake.headers.cookie);
+    const cookieToken = cookies.bs_speaker_token;
+
+    // Reject speaker role if the cookie token is missing or invalid.
+    if (role === 'speaker' && !validateToken(cookieToken, speakerToken)) {
+      socket.data.role = 'audience';
+      socket.emit('speaker:status', { hasControl: false });
+      return;
+    }
+
     socket.data.role = role;
 
     if (role === 'speaker') {
       const isFirst = slideSync.setSpeaker(socket.id);
       socket.emit('speaker:status', { hasControl: isFirst });
+    } else {
+      socket.emit('speaker:status', { hasControl: false });
     }
 
     if (role === 'moderator') {
@@ -111,9 +127,11 @@ io.on('connection', (socket) => {
     }
 
     // Send sync state to all new connections
+    const currentIdx = slideSync.getCurrentSlide();
     socket.emit('slide:sync', {
-      idx: slideSync.getCurrentSlide(),
-      total: 0 // Will be determined client-side
+      idx: currentIdx,
+      total: 0,
+      transforms: slideSync.getSlideTransforms(currentIdx)
     });
     socket.emit('control:state', slideSync.getControlState());
   });
