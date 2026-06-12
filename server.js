@@ -8,6 +8,7 @@ const QRCode = require('qrcode');
 const { injectHtml } = require('./lib/html-injector');
 const { DanmakuStore } = require('./lib/danmaku-store');
 const { SlideSync } = require('./lib/slide-sync');
+const { generateToken, validateToken, parseCookie, buildSpeakerCookie } = require('./lib/speaker-auth');
 
 const HTML_FILE = process.argv[2];
 if (!HTML_FILE) {
@@ -89,6 +90,7 @@ async function startCloudflareTunnel(port) {
 
 const store = new DanmakuStore();
 const slideSync = new SlideSync();
+const speakerToken = generateToken();
 
 io.on('connection', (socket) => {
   // Wait for role announcement
@@ -291,12 +293,13 @@ httpServer.listen(PORT, async () => {
 
   console.log('\n🎯 弹幕服务器已启动\n');
   console.log(`局域网访问：`);
-  console.log(`  演讲者: ${lanUrl}/speaker`);
+  console.log(`  演讲者: ${lanUrl}/speaker?token=${speakerToken}`);
   console.log(`  管理者: ${lanUrl}/moderator`);
   console.log(`  观众:   ${lanUrl}/\n`);
   if (publicUrl) {
     console.log(`外网访问：`);
     console.log(`  观众:   ${publicUrl}/\n`);
   }
-  console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗\n`);
+  console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗`);
+  console.log(`  提示：演讲者链接已包含 token，请妥善保管\n`);
 });
