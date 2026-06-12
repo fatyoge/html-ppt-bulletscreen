@@ -277,6 +277,21 @@ httpServer.listen(PORT, async () => {
   });
 
   app.get('/speaker', (req, res) => {
+    const queryToken = req.query.token;
+    const cookies = parseCookie(req.headers.cookie);
+    const cookieToken = cookies.bs_speaker_token;
+
+    // First entry: valid token in query sets the cookie and redirects to clean URL.
+    if (validateToken(queryToken, speakerToken)) {
+      res.setHeader('Set-Cookie', buildSpeakerCookie(queryToken));
+      return res.redirect('/speaker');
+    }
+
+    // Subsequent visits: require valid cookie.
+    if (!validateToken(cookieToken, speakerToken)) {
+      return res.redirect('/');
+    }
+
     const html = injectHtml(originalHtml, 'speaker', '', publicUrl, lanUrl, qrDataUrl);
     res.send(html);
   });
