@@ -98,4 +98,20 @@ describe('createApp url mode', () => {
     expect(res.body).toContain("window.BS_ROLE = 'audience'");
     expect(res.body).toContain('session'); // upstream body preserved
   });
+
+  test('entry route returns 502 when upstream root is non-2xx', async () => {
+    const badUpstream = await startMockUpstream({ rootStatus: 500 });
+    try {
+      const a = createApp({ mode: 'url', upstreamOrigin: badUpstream.origin, speakerToken: 't', share: {} });
+      const s = serve(a);
+      try {
+        const res = await request(s.origin, '/audience');
+        expect(res.statusCode).toBe(502);
+      } finally {
+        await stop(s.server);
+      }
+    } finally {
+      await stop(badUpstream.server);
+    }
+  });
 });

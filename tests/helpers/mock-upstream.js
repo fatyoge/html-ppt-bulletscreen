@@ -3,11 +3,16 @@ const http = require('http');
 const ROOT_HTML = `<!doctype html><html><head><title>Up</title></head><body><div id="x">root</div></body></html>`;
 const SESSION_HTML = `<!doctype html><html><head><title>Up</title></head><body><div id="x">session</div></body></html>`;
 
-function startMockUpstream() {
+function startMockUpstream(opts) {
+  const rootStatus = (opts && opts.rootStatus) || 200;
   let lastHeaders = {};
   const server = http.createServer((req, res) => {
     lastHeaders = req.headers;
     if (req.url === '/') {
+      if (rootStatus !== 200) {
+        res.writeHead(rootStatus, { 'content-type': 'text/plain' });
+        return res.end('upstream error');
+      }
       res.setHeader('content-type', 'text/html; charset=utf-8');
       return res.end(ROOT_HTML);
     }

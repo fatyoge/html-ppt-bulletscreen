@@ -281,6 +281,8 @@ io.on('connection', (socket) => {
 // URL mode: forward non-Socket.IO WebSocket upgrades (e.g. xterm terminal) to upstream.
 if (isUrlMode && app.locals.urlProxy) {
   const upstreamProxy = app.locals.urlProxy;
+  // Socket.IO (constructed above) attaches its own 'upgrade' listener for /socket.io/;
+  // Node dispatches upgrade to all listeners, so this one handles only non-socket.io paths.
   httpServer.on('upgrade', (req, socket, head) => {
     if (req.url && req.url.startsWith('/socket.io/')) {
       return; // Socket.IO handles its own upgrades.
