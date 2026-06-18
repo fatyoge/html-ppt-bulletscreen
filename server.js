@@ -2,32 +2,51 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
-const path = require('path');
 const { spawn } = require('child_process');
 const QRCode = require('qrcode');
-const { injectHtml } = require('./lib/html-injector');
+const { createApp } = require('./lib/server-app');
 const { DanmakuStore } = require('./lib/danmaku-store');
 const { SlideSync } = require('./lib/slide-sync');
-const { generateToken, validateToken, parseCookie, buildSpeakerCookie } = require('./lib/speaker-auth');
+const { generateToken, validateToken, parseCookie } = require('./lib/speaker-auth');
 
-const HTML_FILE = process.argv[2];
-if (!HTML_FILE) {
-  console.error('Usage: node server.js <path-to-html-file>');
+// --- argv parsing: first non-flag arg is the source; --allow-public is a flag ---
+const argv = process.argv.slice(2);
+const allowPublicFlag = argv.includes('--allow-public');
+const SOURCE_ARG = argv.find((a) => !a.startsWith('-'));
+if (!SOURCE_ARG) {
+  console.error('Usage: node server.js <path-to-html-file | http://upstream-origin> [--allow-public]');
   process.exit(1);
 }
 
-if (!fs.existsSync(HTML_FILE)) {
-  console.error(`Error: File not found: ${HTML_FILE}`);
-  process.exit(1);
+const isUrlMode = /^https?:\/\//i.test(SOURCE_ARG);
+let originalHtml = null;
+let upstreamOrigin = null;
+if (isUrlMode) {
+  upstreamOrigin = SOURCE_ARG.replace(/\/+$/, '');
+} else {
+  if (!fs.existsSync(SOURCE_ARG)) {
+    console.error(`Error: File not found: ${SOURCE_ARG}`);
+    process.exit(1);
+  }
+  originalHtml = fs.readFileSync(SOURCE_ARG, 'utf-8');
 }
 
-const originalHtml = fs.readFileSync(HTML_FILE, 'utf-8');
-const app = express();
+// Public sharing is opt-in for URL mode (upstream may be an interactive app/terminal).
+const allowPublic = !isUrlMode || allowPublicFlag || process.env.BS_ALLOW_PUBLIC === '1';
+
+// share is mutated after the tunnel resolves; routes read it live at request time.
+const share = { publicUrl: '', lanUrl: '', qrDataUrl: '' };
+
+const speakerToken = generateToken();
+const app = createApp({
+  mode: isUrlMode ? 'url' : 'file',
+  originalHtml,
+  upstreamOrigin,
+  speakerToken,
+  share
+});
 const httpServer = createServer(app);
 const io = new Server(httpServer);
-
-// Static assets
-app.use('/public', express.static(path.join(__dirname, 'public')));
 
 function checkCloudflaredInstalled() {
   return new Promise((resolve) => {
@@ -90,7 +109,6 @@ async function startCloudflareTunnel(port) {
 
 const store = new DanmakuStore();
 const slideSync = new SlideSync();
-const speakerToken = generateToken();
 
 io.on('connection', (socket) => {
   // Wait for role announcement
@@ -260,6 +278,17 @@ io.on('connection', (socket) => {
   });
 });
 
+// URL mode: forward non-Socket.IO WebSocket upgrades (e.g. xterm terminal) to upstream.
+if (isUrlMode && app.locals.urlProxy) {
+  const upstreamProxy = app.locals.urlProxy;
+  httpServer.on('upgrade', (req, socket, head) => {
+    if (req.url && req.url.startsWith('/socket.io/')) {
+      return; // Socket.IO handles its own upgrades.
+    }
+    upstreamProxy.ws(req, socket, head);
+  });
+}
+
 const PORT = process.env.PORT || 3000;
 
 httpServer.listen(PORT, async () => {
@@ -274,60 +303,30 @@ httpServer.listen(PORT, async () => {
     }
     if (lanUrl !== `http://localhost:${PORT}`) break;
   }
+  share.lanUrl = lanUrl;
 
   let publicUrl = '';
-  let qrDataUrl = '';
 
-  const cfInstalled = await checkCloudflaredInstalled();
-  if (cfInstalled) {
-    const cfResult = await startCloudflareTunnel(PORT);
-    if (cfResult) {
-      publicUrl = cfResult.url;
-      try {
-        qrDataUrl = await QRCode.toDataURL(publicUrl + '/', { width: 256, margin: 2 });
-      } catch (err) {
-        console.error('二维码生成失败:', err.message);
+  if (allowPublic) {
+    const cfInstalled = await checkCloudflaredInstalled();
+    if (cfInstalled) {
+      const cfResult = await startCloudflareTunnel(PORT);
+      if (cfResult) {
+        publicUrl = cfResult.url;
+        share.publicUrl = publicUrl;
+        try {
+          share.qrDataUrl = await QRCode.toDataURL(publicUrl + '/', { width: 256, margin: 2 });
+        } catch (err) {
+          console.error('二维码生成失败:', err.message);
+        }
       }
     }
   }
 
-  // Define routes after URLs are ready
-  app.get('/', (req, res) => {
-    const html = injectHtml(originalHtml, 'audience', '');
-    res.send(html);
-  });
-
-  app.get('/speaker', (req, res) => {
-    const queryToken = req.query.token;
-    const cookies = parseCookie(req.headers.cookie);
-    const cookieToken = cookies.bs_speaker_token;
-
-    // First entry: valid token in query sets the cookie and redirects to clean URL.
-    if (validateToken(queryToken, speakerToken)) {
-      res.setHeader('Set-Cookie', buildSpeakerCookie(queryToken));
-      return res.redirect('/speaker');
-    }
-
-    // Subsequent visits: require valid cookie.
-    if (!validateToken(cookieToken, speakerToken)) {
-      return res.redirect('/');
-    }
-
-    const html = injectHtml(originalHtml, 'speaker', '', publicUrl, lanUrl, qrDataUrl);
-    res.send(html);
-  });
-
-  app.get('/audience', (req, res) => {
-    const html = injectHtml(originalHtml, 'audience', '');
-    res.send(html);
-  });
-
-  app.get('/moderator', (req, res) => {
-    const html = injectHtml(originalHtml, 'moderator', '');
-    res.send(html);
-  });
-
   console.log('\n🎯 弹幕服务器已启动\n');
+  if (isUrlMode) {
+    console.log(`模式：URL 代理（上游 ${upstreamOrigin}）`);
+  }
   console.log(`局域网访问：`);
   console.log(`  演讲者: ${lanUrl}/speaker?token=${speakerToken}`);
   console.log(`  管理者: ${lanUrl}/moderator`);
@@ -335,6 +334,12 @@ httpServer.listen(PORT, async () => {
   if (publicUrl) {
     console.log(`外网访问：`);
     console.log(`  观众:   ${publicUrl}/\n`);
+    if (isUrlMode) {
+      console.log(`  ⚠️  WARNING: public tunnel enabled for an upstream app — anyone with the link can use ${upstreamOrigin}.`);
+      console.log(`  ⚠️  仅在可信场景下开启，建议演示结束后立即关闭。\n`);
+    }
+  } else if (isUrlMode && !allowPublic) {
+    console.log(`外网访问：已关闭（URL 模式默认仅局域网；如需开启请加 --allow-public 或 BS_ALLOW_PUBLIC=1）\n`);
   }
   console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗`);
   console.log(`  提示：演讲者链接已包含 token，请妥善保管\n`);
