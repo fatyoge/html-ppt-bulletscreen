@@ -72,4 +72,41 @@ describe('injectHtml', () => {
     expect(result).not.toContain('BS_LAN_URL');
     expect(result).not.toContain('BS_QR_CODE');
   });
+
+  test('minimal mode injects SW shim at the very top of head', () => {
+    const result = injectHtml(sampleHtml, 'audience', '', '', '', '', { minimal: true });
+    const headOpenIdx = result.indexOf('<head>');
+    const shimIdx = result.indexOf('navigator.serviceWorker.register');
+    expect(shimIdx).toBeGreaterThan(-1);
+    expect(shimIdx).toBeGreaterThan(headOpenIdx);
+    // shim appears before danmaku.css
+    expect(shimIdx).toBeLessThan(result.indexOf('danmaku.css'));
+  });
+
+  test('minimal mode includes danmaku core and panels', () => {
+    const result = injectHtml(sampleHtml, 'audience', '', '', '', '', { minimal: true });
+    expect(result).toContain('/public/danmaku.css');
+    expect(result).toContain('/socket.io/socket.io.js');
+    expect(result).toContain('/public/danmaku-renderer.js');
+    expect(result).toContain('/public/audience-panel.js');
+    expect(result).toContain('/public/moderator-panel.js');
+  });
+
+  test('minimal mode excludes slide-sync and anim-sync', () => {
+    const result = injectHtml(sampleHtml, 'audience', '', '', '', '', { minimal: true });
+    expect(result).not.toContain('/public/slide-sync.js');
+    expect(result).not.toContain('/public/anim-sync/');
+  });
+
+  test('minimal mode injects role config', () => {
+    const result = injectHtml(sampleHtml, 'moderator', '', '', '', '', { minimal: true });
+    expect(result).toContain("window.BS_ROLE = 'moderator'");
+  });
+
+  test('non-minimal mode still injects slide-sync and anim-sync (unchanged)', () => {
+    const result = injectHtml(sampleHtml, 'speaker', 'http://localhost:3000');
+    expect(result).toContain('/public/slide-sync.js');
+    expect(result).toContain('/public/anim-sync/common.js');
+    expect(result).not.toContain('navigator.serviceWorker.register');
+  });
 });
