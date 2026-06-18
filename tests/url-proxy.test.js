@@ -82,4 +82,27 @@ describe('url-proxy', () => {
     const html = await fetchUpstreamHtml(upstream.origin);
     expect(html).toContain('<div id="x">root</div>');
   });
+
+  test('does not crash when upstream errors mid-stream on a piped asset', async () => {
+    // Regression: the non-HTML pass-through branch previously attached no
+    // 'error' listener on proxyRes. An upstream TCP reset after headers were
+    // written would emit an unhandled 'error' and crash the process.
+    proxyApp = startProxyApp({ upstreamOrigin: upstream.origin, speakerToken: 't' });
+    // The proxy destroys the client response on upstream mid-stream error, so
+    // the response stream closes (either 'end' or 'error'). We assert the
+    // promise resolves rather than rejects and that no unhandled throw occurs.
+    const outcome = await new Promise((resolve) => {
+      const req = http.get(proxyApp.origin + '/static/broken.js', (res) => {
+        const chunks = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => resolve({ kind: 'end', statusCode: res.statusCode, body: Buffer.concat(chunks).toString() }));
+        res.on('error', (e) => resolve({ kind: 'error', code: e.code }));
+      });
+      req.on('error', (e) => resolve({ kind: 'req-error', code: e.code }));
+    });
+    expect(['end', 'error', 'req-error']).toContain(outcome.kind);
+    // Headers were received before the upstream died: the response started.
+    if (outcome.kind === 'end') expect(outcome.statusCode).toBe(200);
+    if (outcome.kind === 'error') expect(outcome.code).toBeDefined();
+  });
 });

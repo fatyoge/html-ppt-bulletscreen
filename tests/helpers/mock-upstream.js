@@ -21,6 +21,16 @@ function startMockUpstream() {
       res.writeHead(302);
       return res.end();
     }
+    if (req.url === '/static/broken.js') {
+      // Simulate an upstream connection error mid-stream: write headers + a
+      // partial body, then destroy the underlying socket. Surfaces as 'error'
+      // on proxyRes in the pass-through branch of handleProxyRes.
+      res.setHeader('content-type', 'application/javascript');
+      res.writeHead(200);
+      res.write('// partial\n');
+      setImmediate(() => { try { res.socket.destroy(); } catch (_) { /* intentional */ } });
+      return;
+    }
     if (req.url.startsWith('/static/')) {
       res.setHeader('content-type', 'application/javascript');
       return res.end('// asset ' + req.url);
