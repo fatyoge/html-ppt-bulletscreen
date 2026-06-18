@@ -111,6 +111,32 @@ node server.js ~/my-talk/index.html
 >
 > 未安装 cloudflared 时仅提供局域网访问，不生成外网链接。
 
+### 共享本地已运行的 HTML 服务（URL 模式）
+
+除了传入 HTML 文件，也可以直接把一个**已经在本地运行的 HTML 服务**通过弹幕服务器共享出去：
+
+```bash
+# Hermes WebUI 已运行在 :8787
+node server.js http://localhost:8787
+```
+
+此时弹幕服务器会成为上游服务的**透明反向代理**：
+
+- 观众打开 `http://<弹幕服务器>/`（或具体会话路径，如 `/session/<id>`）即可看到上游页面 + 弹幕层。
+- 演讲者入口 `/speaker?token=…`、管理者 `/moderator`、观众 `/` 与文件模式一致。
+- 上游的静态资源、API、WebSocket（如终端）自动透传；角色由 cookie 跨页保持。
+
+> ⚠️ **安全提示**：URL 模式默认**仅局域网**开放。因为上游可能是带终端的可交互应用，
+> 公网隧道会让任何拿到链接的人都能操作它（RCE 级风险）。如需公网访问，需显式开启：
+>
+> ```bash
+> node server.js http://localhost:8787 --allow-public
+> # 或
+> BS_ALLOW_PUBLIC=1 node server.js http://localhost:8787
+> ```
+>
+> 开启后控制台会打印醒目 WARNING，建议演示结束后立即关闭。文件模式行为不变（照旧自动尝试公网隧道）。
+
 ### 演讲者入口
 
 启动后控制台会输出类似：
@@ -271,6 +297,9 @@ bullet-screen/
 | 方式 | 说明 | 示例 |
 |------|------|------|
 | 命令行参数 | HTML 文件路径 | `node server.js ./talk.html` |
+| 命令行参数 | 上游 origin（URL 模式） | `node server.js http://localhost:8787` |
+| 命令行 flag | URL 模式开启公网隧道 | `node server.js http://localhost:8787 --allow-public` |
+| 环境变量 | URL 模式开启公网隧道 | `BS_ALLOW_PUBLIC=1 node server.js http://localhost:8787` |
 | 环境变量 | 服务端口号 | `PORT=8080 node server.js ./talk.html` |
 
 ## 开发
