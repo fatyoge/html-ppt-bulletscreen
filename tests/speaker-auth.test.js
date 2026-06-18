@@ -1,4 +1,4 @@
-const { generateToken, validateToken, parseCookie, buildSpeakerCookie } = require('../lib/speaker-auth');
+const { generateToken, validateToken, parseCookie, buildSpeakerCookie, buildModeratorCookie, resolveRole } = require('../lib/speaker-auth');
 
 describe('speaker-auth', () => {
   test('generateToken returns a 32-char hex string', () => {
@@ -41,5 +41,34 @@ describe('speaker-auth', () => {
     expect(buildSpeakerCookie('abc123')).toBe(
       'bs_speaker_token=abc123; HttpOnly; SameSite=Strict; Path=/'
     );
+  });
+
+  test('buildModeratorCookie returns expected Set-Cookie string', () => {
+    expect(buildModeratorCookie()).toBe(
+      'bs_moderator=1; HttpOnly; SameSite=Strict; Path=/'
+    );
+  });
+
+  test('resolveRole returns speaker for valid speaker token cookie', () => {
+    const token = generateToken();
+    expect(resolveRole(`bs_speaker_token=${token}`, token)).toBe('speaker');
+  });
+
+  test('resolveRole returns moderator when only moderator cookie present', () => {
+    expect(resolveRole('bs_moderator=1', 'anyStoredToken')).toBe('moderator');
+  });
+
+  test('resolveRole returns audience when no role cookies', () => {
+    expect(resolveRole('', 'anyStoredToken')).toBe('audience');
+    expect(resolveRole(undefined, 'anyStoredToken')).toBe('audience');
+  });
+
+  test('resolveRole prefers speaker over moderator', () => {
+    const token = generateToken();
+    expect(resolveRole(`bs_speaker_token=${token}; bs_moderator=1`, token)).toBe('speaker');
+  });
+
+  test('resolveRole returns audience for invalid speaker token', () => {
+    expect(resolveRole('bs_speaker_token=wrong', 'realToken')).toBe('audience');
   });
 });
