@@ -10,8 +10,11 @@ function startMockUpstream(opts) {
     lastHeaders = req.headers;
     if (req.url === '/') {
       if (rootStatus !== 200) {
-        res.writeHead(rootStatus, { 'content-type': 'text/plain' });
-        return res.end('upstream error');
+        // Valid HTML body (has </head>/</body>) so injectHtml succeeds — this makes the
+        // entry-route 502 test a genuine two-way discriminator for the fetchUpstreamHtml
+        // status check (without the check, this body is injected and served as 200).
+        res.writeHead(rootStatus, { 'content-type': 'text/html; charset=utf-8' });
+        return res.end('<!doctype html><html><head><title>err</title></head><body>upstream error</body></html>');
       }
       res.setHeader('content-type', 'text/html; charset=utf-8');
       return res.end(ROOT_HTML);
