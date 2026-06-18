@@ -109,4 +109,23 @@ describe('injectHtml', () => {
     expect(result).toContain('/public/anim-sync/common.js');
     expect(result).not.toContain('navigator.serviceWorker.register');
   });
+
+  test('default mode preserves original script order (anim-sync before socket.io before slide-sync before panels)', () => {
+    const result = injectHtml(sampleHtml, 'speaker', 'http://localhost:3000');
+    const idx = (needle) => result.indexOf(needle);
+    expect(idx('/public/anim-sync/common.js')).toBeLessThan(idx('/socket.io/socket.io.js'));
+    expect(idx('/socket.io/socket.io.js')).toBeLessThan(idx('/public/danmaku-renderer.js'));
+    expect(idx('/public/danmaku-renderer.js')).toBeLessThan(idx('/public/slide-sync.js'));
+    expect(idx('/public/slide-sync.js')).toBeLessThan(idx('/public/audience-panel.js'));
+    expect(idx('/public/audience-panel.js')).toBeLessThan(idx('/public/moderator-panel.js'));
+    expect(idx('/public/anim-sync/declarative-watcher.js')).toBeLessThan(idx('/public/moderator-panel.js'));
+  });
+
+  test('minimal mode sw shim runs before an upstream inline head script', () => {
+    const htmlWithHeadScript = `<!DOCTYPE html><html><head><title>T</title>
+<script>window.__upstream=1;</script></head><body></body></html>`;
+    const result = injectHtml(htmlWithHeadScript, 'audience', '', '', '', '', { minimal: true });
+    expect(result.indexOf('navigator.serviceWorker.register'))
+      .toBeLessThan(result.indexOf('window.__upstream=1'));
+  });
 });
