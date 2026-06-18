@@ -88,21 +88,25 @@ describe('url-proxy', () => {
     // 'error' listener on proxyRes. An upstream TCP reset after headers were
     // written would emit an unhandled 'error' and crash the process.
     proxyApp = startProxyApp({ upstreamOrigin: upstream.origin, speakerToken: 't' });
-    // The proxy destroys the client response on upstream mid-stream error, so
-    // the response stream closes (either 'end' or 'error'). We assert the
-    // promise resolves rather than rejects and that no unhandled throw occurs.
+    // The piped branch must forward the partial body the upstream flushed
+    // before dying, then terminate the client stream cleanly (via the
+    // proxyRes 'error' listener) instead of hanging or crashing.
     const outcome = await new Promise((resolve) => {
+      const chunks = [];
       const req = http.get(proxyApp.origin + '/static/broken.js', (res) => {
-        const chunks = [];
         res.on('data', (c) => chunks.push(c));
-        res.on('end', () => resolve({ kind: 'end', statusCode: res.statusCode, body: Buffer.concat(chunks).toString() }));
-        res.on('error', (e) => resolve({ kind: 'error', code: e.code }));
+        res.on('end', () => resolve({ kind: 'end', body: Buffer.concat(chunks).toString() }));
+        res.on('error', () => resolve({ kind: 'error', body: Buffer.concat(chunks).toString() }));
       });
-      req.on('error', (e) => resolve({ kind: 'req-error', code: e.code }));
+      req.on('error', () => resolve({ kind: 'req-error', body: Buffer.concat(chunks).toString() }));
     });
-    expect(['end', 'error', 'req-error']).toContain(outcome.kind);
-    // Headers were received before the upstream died: the response started.
-    if (outcome.kind === 'end') expect(outcome.statusCode).toBe(200);
-    if (outcome.kind === 'error') expect(outcome.code).toBeDefined();
+    // The client stream must terminate (either 'end' or 'error') rather than
+    // hang; a hang still trips Jest's timeout as a backstop, but the body
+    // assertion below is the primary load-bearing signal.
+    expect(['end', 'error']).toContain(outcome.kind);
+    // The upstream flushed headers + `// partial\n` before destroying its
+    // socket. Receiving that body proves the piped branch forwarded data and
+    // then terminated cleanly, rather than crashing before any bytes flowed.
+    expect(outcome.body).toContain('// partial');
   });
 });
