@@ -56,13 +56,13 @@ describe('SlideSync', () => {
 
   test('getControlState returns default values', () => {
     const state = sync.getControlState();
-    expect(state).toEqual({ paused: false, speed: 1.0, density: 5 });
+    expect(state).toEqual({ paused: false, speed: 1.0, density: 5, topRatio: 0.3 });
   });
 
   test('setControlState updates state', () => {
-    sync.setControlState({ paused: true, speed: 2.0, density: 8 });
+    sync.setControlState({ paused: true, speed: 2.0, density: 8, topRatio: 0.5 });
     const state = sync.getControlState();
-    expect(state).toEqual({ paused: true, speed: 2.0, density: 8 });
+    expect(state).toEqual({ paused: true, speed: 2.0, density: 8, topRatio: 0.5 });
   });
 
   test('setSlideTransforms and getSlideTransforms persist transforms', () => {
