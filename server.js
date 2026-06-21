@@ -267,9 +267,46 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const START_PORT = parseInt(process.env.PORT, 10) || 3000;
+const MAX_PORT_ATTEMPTS = 100;
 
-httpServer.listen(PORT, async () => {
+/**
+ * 尝试在指定端口启动服务器；如果被占用则自动尝试下一个端口。
+ * @param {number} port - 要尝试的端口号
+ * @returns {Promise<number>} 实际监听成功的端口号
+ */
+function tryListen(port) {
+  return new Promise((resolve, reject) => {
+    const onError = (err) => {
+      httpServer.removeListener('listening', onListening);
+      if (err.code === 'EADDRINUSE' && port < START_PORT + MAX_PORT_ATTEMPTS) {
+        console.log(`端口 ${port} 被占用，尝试 ${port + 1}`);
+        tryListen(port + 1).then(resolve).catch(reject);
+      } else {
+        reject(err);
+      }
+    };
+
+    const onListening = () => {
+      httpServer.removeListener('error', onError);
+      resolve(port);
+    };
+
+    httpServer.once('listening', onListening);
+    httpServer.once('error', onError);
+    httpServer.listen(port);
+  });
+}
+
+(async () => {
+  let PORT;
+  try {
+    PORT = await tryListen(START_PORT);
+  } catch (err) {
+    console.error(`启动失败：${err.message}`);
+    process.exit(1);
+  }
+
   const interfaces = require('os').networkInterfaces();
   let lanUrl = `http://localhost:${PORT}`;
   for (const name in interfaces) {
@@ -345,4 +382,4 @@ httpServer.listen(PORT, async () => {
   }
   console.log(`快捷键：Ctrl + Alt + S 打开分享弹窗`);
   console.log(`  提示：演讲者链接已包含 token，请妥善保管\n`);
-});
+})();
