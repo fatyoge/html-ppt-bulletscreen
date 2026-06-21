@@ -243,6 +243,13 @@ io.on('connection', (socket) => {
     io.emit('control:density', { density });
   });
 
+  socket.on('control:topRatio', ({ topRatio }) => {
+    if (socket.data.role !== 'speaker') return;
+    const clamped = Math.max(0.1, Math.min(1.0, parseFloat(topRatio) || 0.3));
+    slideSync.setControlState({ topRatio: clamped });
+    io.emit('control:topRatio', { topRatio: clamped });
+  });
+
   // Disconnect
   socket.on('disconnect', () => {
     slideSync.removeSpeaker(socket.id);
