@@ -231,6 +231,11 @@
         <input type="range" id="density-slider" min="1" max="10" step="1" value="5">
         <span id="density-val">5</span>
       </div>
+      <div class="control-group">
+        <label>高度</label>
+        <input type="range" id="top-ratio-slider" min="10" max="100" step="10" value="30">
+        <span id="top-ratio-val">30%</span>
+      </div>
     `;
     document.body.appendChild(controls);
 
@@ -300,6 +305,13 @@
       const val = parseInt(e.target.value);
       document.getElementById('density-val').textContent = val;
       socket.emit('control:density', { density: val });
+    });
+
+    const topRatioSlider = document.getElementById('top-ratio-slider');
+    topRatioSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      document.getElementById('top-ratio-val').textContent = val + '%';
+      socket.emit('control:topRatio', { topRatio: val / 100 });
     });
 
     // Share modal
