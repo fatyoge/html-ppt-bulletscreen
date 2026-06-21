@@ -216,6 +216,63 @@
   min-height: 18px;
 }
 
+#audience-input .input-tools {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#audience-input #btn-emoji {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+#audience-input #btn-emoji:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+#audience-input .emoji-picker {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  display: none;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 8px;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  z-index: 10001;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#audience-input .emoji-picker.visible {
+  display: grid;
+}
+
+#audience-input .emoji-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+#audience-input .emoji-option:hover {
+  background: rgba(255,255,255,0.15);
+}
+
 /* ===== Moderator Panel ===== */
 #moderator-queue {
   display: flex;
