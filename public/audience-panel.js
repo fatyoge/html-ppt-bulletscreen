@@ -111,7 +111,7 @@
     // Use setTimeout to ensure DOM is fully ready before binding events
     setTimeout(() => {
       const picker = document.getElementById('color-picker');
-      let selectedColor = COLORS[0].value;
+      let selectedColor = COLORS[Math.floor(Math.random() * COLORS.length)].value;
 
       COLORS.forEach(c => {
         const opt = document.createElement('div');
