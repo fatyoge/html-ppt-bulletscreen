@@ -29,6 +29,11 @@ const io = new Server(httpServer);
 // Static assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// 托管目标 HTML 文件所在目录，使其 css/ js/ data/ 等相对路径资源可被同源访问。
+// 这样多文件静态站点（如 `python -m http.server` 托管的整站）也能叠加弹幕层。
+// index:false —— 避免 static 把 GET / 直接返回原始 index.html，抢走注入路由。
+app.use(express.static(path.dirname(path.resolve(HTML_FILE)), { index: false }));
+
 function checkCloudflaredInstalled() {
   return new Promise((resolve) => {
     const isWin = process.platform === 'win32';
