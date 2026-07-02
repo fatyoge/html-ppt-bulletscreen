@@ -12,6 +12,8 @@
     { name: '橙', value: '#ff8844' }
   ];
 
+  const EMOJIS = ['😀', '😂', '🤔', '👍', '❤️', '🎉', '🔥', '✨', '👏', '🙏', '😭', '😅', '😍', '🤩', '😎', '🤯', '🥳', '👀', '💡', '💯'];
+
   window.initAudiencePanel = function(socket) {
     if (window.innerWidth < 768) {
       createMobilePanel(socket);
@@ -103,6 +105,10 @@
   function buildInputArea(container, socket) {
     container.innerHTML = `
       <textarea id="dm-text" placeholder="输入弹幕内容..." maxlength="100"></textarea>
+      <div class="input-tools">
+        <button type="button" id="btn-emoji" title="插入表情">😊</button>
+        <div class="emoji-picker" id="emoji-picker"></div>
+      </div>
       <div class="color-picker" id="color-picker"></div>
       <button id="btn-send">发送</button>
       <div class="send-status" id="send-status"></div>
@@ -111,7 +117,7 @@
     // Use setTimeout to ensure DOM is fully ready before binding events
     setTimeout(() => {
       const picker = document.getElementById('color-picker');
-      let selectedColor = COLORS[0].value;
+      let selectedColor = COLORS[Math.floor(Math.random() * COLORS.length)].value;
 
       COLORS.forEach(c => {
         const opt = document.createElement('div');
@@ -129,6 +135,40 @@
       const textInput = document.getElementById('dm-text');
       const sendBtn = document.getElementById('btn-send');
       const statusEl = document.getElementById('send-status');
+
+      // Emoji picker
+      const emojiBtn = document.getElementById('btn-emoji');
+      const emojiPicker = document.getElementById('emoji-picker');
+      let emojiPickerVisible = false;
+
+      EMOJIS.forEach(emoji => {
+        const span = document.createElement('span');
+        span.className = 'emoji-option';
+        span.textContent = emoji;
+        span.addEventListener('click', () => {
+          const start = textInput.selectionStart || 0;
+          const end = textInput.selectionEnd || 0;
+          const value = textInput.value;
+          textInput.value = value.slice(0, start) + emoji + value.slice(end);
+          textInput.focus();
+          const newPos = start + emoji.length;
+          textInput.setSelectionRange(newPos, newPos);
+        });
+        emojiPicker.appendChild(span);
+      });
+
+      emojiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        emojiPickerVisible = !emojiPickerVisible;
+        emojiPicker.classList.toggle('visible', emojiPickerVisible);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+          emojiPickerVisible = false;
+          emojiPicker.classList.remove('visible');
+        }
+      });
 
       function send() {
         const text = textInput.value.trim();

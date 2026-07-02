@@ -12,6 +12,11 @@
   let maxConcurrent = 5;
   let activeDanmaku = [];
   let pendingDanmaku = [];
+  let topRatio = 0.3;
+
+  function getUsableTrackCount() {
+    return Math.max(1, Math.floor(TRACK_COUNT * topRatio));
+  }
 
   function init() {
     createLayer();
@@ -66,10 +71,17 @@
       maxConcurrent = density;
     });
 
+    socket.on('control:topRatio', ({ topRatio: ratio }) => {
+      topRatio = Math.max(0.1, Math.min(1.0, parseFloat(ratio) || 0.3));
+    });
+
     socket.on('control:state', (state) => {
       isPaused = state.paused;
       speedMultiplier = state.speed;
       maxConcurrent = state.density;
+      if (state.topRatio !== undefined) {
+        topRatio = Math.max(0.1, Math.min(1.0, parseFloat(state.topRatio) || 0.3));
+      }
     });
 
     // Save slide sync data for slide-sync.js (which may miss the initial event)
@@ -99,12 +111,16 @@
 
   function findAvailableTrack() {
     const now = performance.now();
-    for (let i = 0; i < TRACK_COUNT; i++) {
+    const usableCount = getUsableTrackCount();
+    const available = [];
+    for (let i = 0; i < usableCount; i++) {
       if (now >= tracks[i].busyUntil) {
-        return i;
+        available.push(i);
       }
     }
-    return -1;
+    if (available.length === 0) return -1;
+    const randomIndex = Math.floor(Math.random() * available.length);
+    return available[randomIndex];
   }
 
   function renderDanmaku(dm, trackIdx) {
@@ -231,6 +247,11 @@
         <input type="range" id="density-slider" min="1" max="10" step="1" value="5">
         <span id="density-val">5</span>
       </div>
+      <div class="control-group">
+        <label>高度</label>
+        <input type="range" id="top-ratio-slider" min="10" max="100" step="10" value="30">
+        <span id="top-ratio-val">30%</span>
+      </div>
     `;
     document.body.appendChild(controls);
 
@@ -300,6 +321,13 @@
       const val = parseInt(e.target.value);
       document.getElementById('density-val').textContent = val;
       socket.emit('control:density', { density: val });
+    });
+
+    const topRatioSlider = document.getElementById('top-ratio-slider');
+    topRatioSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      document.getElementById('top-ratio-val').textContent = val + '%';
+      socket.emit('control:topRatio', { topRatio: val / 100 });
     });
 
     // Share modal
