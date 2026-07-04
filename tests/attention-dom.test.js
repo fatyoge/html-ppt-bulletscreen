@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 jest.useFakeTimers();
-const { renderAt, sampleBgRgb } = require('../public/attention');
+const { renderAt, sampleBgRgb, initSpeakerUI, getState } = require('../public/attention');
 
 beforeEach(() => {
   document.body.innerHTML = '';
@@ -52,5 +52,33 @@ describe('sampleBgRgb', () => {
     } finally {
       document.elementFromPoint = real;
     }
+  });
+});
+
+describe('initSpeakerUI', () => {
+  test('defaults are ping / auto', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    expect(getState().effect).toBe('ping');
+    expect(getState().colorMode).toBe('auto');
+  });
+
+  test('clicking 波纹 sets effect to ripple', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    const rippleBtn = container.querySelector('.attn-seg[data-kind="effect"] .attn-seg-btn[data-v="ripple"]');
+    rippleBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    expect(getState().effect).toBe('ripple');
+  });
+
+  test('clicking 暖 sets colorMode to warm', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    const warmBtn = container.querySelector('.attn-seg[data-kind="colorMode"] .attn-seg-btn[data-v="warm"]');
+    warmBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    expect(getState().colorMode).toBe('warm');
   });
 });

@@ -220,6 +220,51 @@
     }
   }
 
+  /* ============ Speaker UI ============ */
+
+  function getState() {
+    return { effect: state.effect, colorMode: state.colorMode };
+  }
+
+  function selectBtn(group, kind, value) {
+    var seg = group.querySelector('.attn-seg[data-kind="' + kind + '"]');
+    if (!seg) return;
+    seg.querySelectorAll('.attn-seg-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-v') === value);
+    });
+  }
+
+  function initSpeakerUI(container) {
+    var group = document.createElement('div');
+    group.className = 'control-group bs-attn-controls';
+    group.innerHTML =
+      '<div class="attn-seg" data-kind="effect">' +
+        '<button type="button" class="attn-seg-btn" data-v="ping">脉冲</button>' +
+        '<button type="button" class="attn-seg-btn" data-v="ripple">波纹</button>' +
+        '<button type="button" class="attn-seg-btn" data-v="spotlight">聚光</button>' +
+      '</div>' +
+      '<div class="attn-seg" data-kind="colorMode">' +
+        '<button type="button" class="attn-seg-btn" data-v="auto">自动</button>' +
+        '<button type="button" class="attn-seg-btn" data-v="warm">暖</button>' +
+        '<button type="button" class="attn-seg-btn" data-v="cool">冷</button>' +
+        '<button type="button" class="attn-seg-btn" data-v="hc">黑白</button>' +
+      '</div>';
+    container.appendChild(group);
+    selectBtn(group, 'effect', state.effect);
+    selectBtn(group, 'colorMode', state.colorMode);
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('.attn-seg-btn');
+      if (!btn) return;
+      var seg = btn.closest('.attn-seg');
+      var kind = seg.getAttribute('data-kind');
+      var v = btn.getAttribute('data-v');
+      if (kind === 'effect') state.effect = v;
+      else state.colorMode = v;
+      selectBtn(group, kind, v);
+    });
+    return group;
+  }
+
   /* ============ Exports ============ */
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -228,7 +273,9 @@
       hueDistance: hueDistance,
       hexToRgb: hexToRgb,
       renderAt: renderAt,
-      sampleBgRgb: sampleBgRgb
+      sampleBgRgb: sampleBgRgb,
+      initSpeakerUI: initSpeakerUI,
+      getState: getState
     };
   }
 
@@ -237,6 +284,7 @@
     window.BS_Attention = {
       pickAccent: pickAccent,
       renderAt: renderAt,
+      initSpeakerUI: initSpeakerUI,
       init: init
     };
     var _poll = setInterval(function () {
