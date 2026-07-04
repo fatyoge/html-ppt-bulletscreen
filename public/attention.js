@@ -101,13 +101,57 @@
     return { accent: best.accent, core: best.core };
   }
 
+  /* ============ Rendering (DOM) ============ */
+
+  function createLayer() {
+    var layer = document.getElementById('bs-attention-layer');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.id = 'bs-attention-layer';
+      document.body.appendChild(layer);
+    }
+    return layer;
+  }
+
+  function innerHtmlFor(effect) {
+    if (effect === 'spotlight') {
+      return '<span class="bs-attn__glow"></span><span class="bs-attn__dot"></span>';
+    }
+    if (effect === 'ripple') {
+      return '<span class="bs-attn__core"></span>' +
+        '<span class="bs-attn__ring" style="animation-delay:0s"></span>' +
+        '<span class="bs-attn__ring" style="animation-delay:.35s"></span>' +
+        '<span class="bs-attn__ring" style="animation-delay:.7s"></span>';
+    }
+    // ping (default)
+    return '<span class="bs-attn__core"></span>' +
+      '<span class="bs-attn__ring" style="animation-delay:0s"></span>' +
+      '<span class="bs-attn__ring" style="animation-delay:.5s"></span>';
+  }
+
+  function renderAt(opts) {
+    var layer = createLayer();
+    var wrap = document.createElement('div');
+    wrap.className = 'bs-attn bs-attn--' + opts.effect;
+    wrap.style.left = opts.xPct + '%';
+    wrap.style.top = opts.yPct + '%';
+    wrap.style.setProperty('--accent', opts.accent);
+    wrap.style.setProperty('--core', opts.core);
+    wrap.innerHTML = innerHtmlFor(opts.effect);
+    layer.appendChild(wrap);
+    setTimeout(function () {
+      if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    }, 1500);
+  }
+
   /* ============ Exports ============ */
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       pickAccent: pickAccent,
       relativeLuminance: relativeLuminance,
       hueDistance: hueDistance,
-      hexToRgb: hexToRgb
+      hexToRgb: hexToRgb,
+      renderAt: renderAt
     };
   }
 })();
