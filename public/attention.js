@@ -205,6 +205,7 @@
       if (!msg || typeof msg.id === 'undefined') return;
       if (seen.has(msg.id)) return;
       seen.add(msg.id);
+      setTimeout(function () { seen.delete(msg.id); }, 5000);
       var bgRgb = sampleBgRgb(msg.xPct, msg.yPct) || msg.bgRgb || [17, 17, 24];
       var picked = pickAccent(bgRgb, msg.colorMode || 'auto');
       renderAt({
@@ -225,6 +226,8 @@
   function getState() {
     return { effect: state.effect, colorMode: state.colorMode };
   }
+
+  function resetState() { state.effect = 'ping'; state.colorMode = 'auto'; }
 
   function selectBtn(group, kind, value) {
     var seg = group.querySelector('.attn-seg[data-kind="' + kind + '"]');
@@ -275,7 +278,8 @@
       renderAt: renderAt,
       sampleBgRgb: sampleBgRgb,
       initSpeakerUI: initSpeakerUI,
-      getState: getState
+      getState: getState,
+      resetState: resetState
     };
   }
 

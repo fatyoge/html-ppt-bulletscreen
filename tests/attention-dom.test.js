@@ -2,10 +2,11 @@
  * @jest-environment jsdom
  */
 jest.useFakeTimers();
-const { renderAt, sampleBgRgb, initSpeakerUI, getState } = require('../public/attention');
+const { renderAt, sampleBgRgb, initSpeakerUI, getState, resetState } = require('../public/attention');
 
 beforeEach(() => {
   document.body.innerHTML = '';
+  resetState();
   jest.useFakeTimers();
 });
 

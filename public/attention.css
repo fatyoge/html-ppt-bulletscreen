@@ -73,7 +73,6 @@
   margin: -70px 0 0 -70px;
   border-radius: 50%;
   background: radial-gradient(circle, var(--accent) 0%, rgba(0, 0, 0, 0) 68%);
-  mix-blend-mode: screen;
   opacity: 0.85;
   animation: bs-attn-spot 1.5s ease-in-out forwards;
 }
@@ -84,7 +83,7 @@
   width: 8px;
   height: 8px;
   margin: -4px 0 0 -4px;
-  background: #fff;
+  background: var(--core);
   border-radius: 50%;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25), 0 0 14px #fff, 0 0 26px var(--accent);
 }

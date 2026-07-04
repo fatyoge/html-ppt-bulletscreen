@@ -227,7 +227,7 @@ io.on('connection', (socket) => {
   // Attention marker broadcast (speaker -> all, incl. speaker echo)
   socket.on('attention:ping', (msg) => {
     if (socket.data.role !== 'speaker') return;
-    if (!msg || typeof msg.xPct !== 'number' || typeof msg.yPct !== 'number') return;
+    if (!msg || !Number.isFinite(msg.xPct) || !Number.isFinite(msg.yPct)) return;
     io.emit('attention:ping', msg);
   });
 
