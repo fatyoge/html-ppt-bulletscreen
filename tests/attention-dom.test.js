@@ -1,7 +1,8 @@
 /**
  * @jest-environment jsdom
  */
-const { renderAt } = require('../public/attention');
+jest.useFakeTimers();
+const { renderAt, sampleBgRgb } = require('../public/attention');
 
 beforeEach(() => {
   document.body.innerHTML = '';
@@ -32,5 +33,24 @@ describe('renderAt', () => {
     expect(document.querySelector('.bs-attn')).not.toBeNull();
     jest.advanceTimersByTime(1600);
     expect(document.querySelector('.bs-attn')).toBeNull();
+  });
+});
+
+describe('sampleBgRgb', () => {
+  test('returns null when nothing opaque found (empty jsdom)', () => {
+    expect(sampleBgRgb(50, 50)).toBeNull();
+  });
+
+  test('reads opaque inline background at the point', () => {
+    const el = document.createElement('div');
+    el.style.backgroundColor = 'rgb(255, 140, 26)';
+    document.body.appendChild(el);
+    const real = document.elementFromPoint;
+    document.elementFromPoint = () => el;
+    try {
+      expect(sampleBgRgb(50, 50)).toEqual([255, 140, 26]);
+    } finally {
+      document.elementFromPoint = real;
+    }
   });
 });

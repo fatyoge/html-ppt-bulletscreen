@@ -144,6 +144,82 @@
     }, 1500);
   }
 
+  /* ============ Background sampling + socket wiring ============ */
+
+  var state = { effect: 'ping', colorMode: 'auto' };
+  var seen = new Set();
+  var IGNORE_SELECTOR =
+    '#speaker-controls,#speaker-controls-trigger,#side-panel,#mobile-fab,' +
+    '#mobile-drawer,#drawer-overlay,#share-modal,#danmaku-layer';
+
+  function uuid() {
+    return 'a-' + Date.now().toString(36) + '-' +
+      Math.random().toString(36).slice(2, 8);
+  }
+
+  function readBg(el) {
+    var bg = getComputedStyle(el).backgroundColor;
+    var m = bg.match(/[\d.]+/g);
+    if (!m) return null;
+    var a = m.length >= 4 ? parseFloat(m[3]) : 1;
+    if (a < 0.9) return null;            // 半透明 → 继续向上
+    return [parseInt(m[0], 10), parseInt(m[1], 10), parseInt(m[2], 10)];
+  }
+
+  function sampleBgRgb(xPct, yPct) {
+    var x = Math.round(xPct / 100 * window.innerWidth);
+    var y = Math.round(yPct / 100 * window.innerHeight);
+    var el = (typeof document.elementFromPoint === 'function')
+      ? document.elementFromPoint(x, y) : null;
+    while (el) {
+      var c = readBg(el);
+      if (c) return c;
+      el = el.parentElement;
+    }
+    var slide = document.querySelector('.slide.is-active');
+    if (slide) {
+      var sc = readBg(slide);
+      if (sc) return sc;
+    }
+    return null;
+  }
+
+  function bindDblclick(socket) {
+    document.addEventListener('dblclick', function (e) {
+      if (e.target && e.target.closest && e.target.closest(IGNORE_SELECTOR)) return;
+      var xPct = e.clientX / window.innerWidth * 100;
+      var yPct = e.clientY / window.innerHeight * 100;
+      socket.emit('attention:ping', {
+        id: uuid(),
+        xPct: xPct,
+        yPct: yPct,
+        effect: state.effect,
+        colorMode: state.colorMode,
+        bgRgb: sampleBgRgb(xPct, yPct) || [17, 17, 24]
+      });
+    });
+  }
+
+  function init(socket) {
+    socket.on('attention:ping', function (msg) {
+      if (!msg || typeof msg.id === 'undefined') return;
+      if (seen.has(msg.id)) return;
+      seen.add(msg.id);
+      var bgRgb = sampleBgRgb(msg.xPct, msg.yPct) || msg.bgRgb || [17, 17, 24];
+      var picked = pickAccent(bgRgb, msg.colorMode || 'auto');
+      renderAt({
+        xPct: msg.xPct,
+        yPct: msg.yPct,
+        effect: msg.effect || 'ping',
+        accent: picked.accent,
+        core: picked.core
+      });
+    });
+    if (window.BS_ROLE === 'speaker') {
+      bindDblclick(socket);
+    }
+  }
+
   /* ============ Exports ============ */
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -151,7 +227,24 @@
       relativeLuminance: relativeLuminance,
       hueDistance: hueDistance,
       hexToRgb: hexToRgb,
-      renderAt: renderAt
+      renderAt: renderAt,
+      sampleBgRgb: sampleBgRgb
     };
+  }
+
+  /* ============ Browser bootstrap ============ */
+  if (typeof window !== 'undefined') {
+    window.BS_Attention = {
+      pickAccent: pickAccent,
+      renderAt: renderAt,
+      init: init
+    };
+    var _poll = setInterval(function () {
+      if (window._danmakuSocket) {
+        clearInterval(_poll);
+        init(window._danmakuSocket);
+      }
+    }, 100);
+    setTimeout(function () { clearInterval(_poll); }, 10000);
   }
 })();
