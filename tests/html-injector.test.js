@@ -72,4 +72,12 @@ describe('injectHtml', () => {
     expect(result).not.toContain('BS_LAN_URL');
     expect(result).not.toContain('BS_QR_CODE');
   });
+
+  test('injects attention css and script for all roles', () => {
+    const result = injectHtml(sampleHtml, 'audience', 'http://localhost:3000');
+    expect(result).toContain('<link rel="stylesheet" href="/public/attention.css">');
+    expect(result.indexOf('attention.css')).toBeLessThan(result.indexOf('</head>'));
+    expect(result).toContain('/public/attention.js');
+    expect(result.indexOf('/public/attention.js')).toBeLessThan(result.indexOf('</body>'));
+  });
 });
