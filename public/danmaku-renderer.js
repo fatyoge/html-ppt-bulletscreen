@@ -254,6 +254,9 @@
       </div>
     `;
     document.body.appendChild(controls);
+    if (window.BS_Attention && typeof window.BS_Attention.initSpeakerUI === 'function') {
+      window.BS_Attention.initSpeakerUI(controls);
+    }
 
     // Bottom hover trigger zone
     const trigger = document.createElement('div');
