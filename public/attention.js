@@ -123,10 +123,9 @@
         '<span class="bs-attn__ring" style="animation-delay:.35s"></span>' +
         '<span class="bs-attn__ring" style="animation-delay:.7s"></span>';
     }
-    // ping (default)
+    // ping (default) — single ring, no repeat
     return '<span class="bs-attn__core"></span>' +
-      '<span class="bs-attn__ring" style="animation-delay:0s"></span>' +
-      '<span class="bs-attn__ring" style="animation-delay:.5s"></span>';
+      '<span class="bs-attn__ring"></span>';
   }
 
   function renderAt(opts) {

@@ -44,14 +44,27 @@
   opacity: 0;
 }
 
-/* ---- Ping（默认）：常驻 core + 两圈雷达扩散 ---- */
+/* ---- Ping（默认）：单次快速扩散 + 柔和渐变（MacBook 风格，不重复） ---- */
 .bs-attn--ping .bs-attn__ring {
-  animation: bs-attn-ping 1.5s cubic-bezier(0, 0.5, 0.4, 1) forwards;
+  border-width: 0;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0) 54%, var(--accent) 62%, rgba(0, 0, 0, 0) 72%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 0 12px 1px var(--accent);
+  will-change: transform, opacity;
+  animation: bs-attn-ping 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.bs-attn--ping .bs-attn__core {
+  will-change: transform, opacity;
+  animation: bs-attn-ping-core 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 @keyframes bs-attn-ping {
-  0%   { transform: scale(1); opacity: 0.9; }
-  80%  { opacity: 0; }
-  100% { transform: scale(6); opacity: 0; }
+  0%   { transform: scale(0.55); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: scale(5.5); opacity: 0; }
+}
+@keyframes bs-attn-ping-core {
+  0%   { transform: scale(1); opacity: 1; }
+  55%  { opacity: 0.5; }
+  100% { transform: scale(0.3); opacity: 0; }
 }
 
 /* ---- Ripple：三圈同心扩散 + core ---- */

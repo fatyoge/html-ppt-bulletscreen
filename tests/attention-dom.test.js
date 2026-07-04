@@ -20,7 +20,7 @@ describe('renderAt', () => {
     expect(marker.style.left).toBe('50%');
     expect(marker.style.top).toBe('50%');
     expect(marker.querySelectorAll('.bs-attn__core')).toHaveLength(1);
-    expect(marker.querySelectorAll('.bs-attn__ring')).toHaveLength(2);
+    expect(marker.querySelectorAll('.bs-attn__ring')).toHaveLength(1);
   });
 
   test('ripple has 3 rings', () => {
