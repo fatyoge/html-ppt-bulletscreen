@@ -224,6 +224,13 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('bs:anim:trigger', msg);
   });
 
+  // Attention marker broadcast (speaker -> all, incl. speaker echo)
+  socket.on('attention:ping', (msg) => {
+    if (socket.data.role !== 'speaker') return;
+    if (!msg || typeof msg.xPct !== 'number' || typeof msg.yPct !== 'number') return;
+    io.emit('attention:ping', msg);
+  });
+
   // Speaker controls
   socket.on('control:clear', () => {
     if (socket.data.role !== 'speaker') return;
