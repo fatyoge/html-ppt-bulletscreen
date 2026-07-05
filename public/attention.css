@@ -67,16 +67,23 @@
   100% { transform: scale(0.3); opacity: 0; }
 }
 
-/* ---- Ripple：三圈同心扩散 + core ---- */
+/* ---- Ripple：单圈实心扩散（参考脉冲，不重复） ---- */
 .bs-attn--ripple .bs-attn__ring {
-  animation: bs-attn-ripple 1.5s ease-out forwards;
+  /* 实心描边圈，区别于脉冲的渐变软圈 */
+  will-change: transform, opacity;
+  animation: bs-attn-ripple 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.bs-attn--ripple .bs-attn__core {
+  will-change: transform, opacity;
+  animation: bs-attn-ping-core 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 @keyframes bs-attn-ripple {
-  0%   { transform: scale(0.4); opacity: 0.85; }
-  100% { transform: scale(4.5); opacity: 0; }
+  0%   { transform: scale(0.5); opacity: 0; }
+  18%  { opacity: 0.9; }
+  100% { transform: scale(5.5); opacity: 0; }
 }
 
-/* ---- Spotlight：径向光晕呼吸 + 亮点 ---- */
+/* ---- Spotlight：单次柔光扩散（参考脉冲，不呼吸） ---- */
 .bs-attn--spotlight .bs-attn__glow {
   position: absolute;
   left: 0;
@@ -86,8 +93,8 @@
   margin: -70px 0 0 -70px;
   border-radius: 50%;
   background: radial-gradient(circle, var(--accent) 0%, rgba(0, 0, 0, 0) 68%);
-  opacity: 0.85;
-  animation: bs-attn-spot 1.5s ease-in-out forwards;
+  will-change: transform, opacity;
+  animation: bs-attn-spot 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .bs-attn--spotlight .bs-attn__dot {
   position: absolute;
@@ -99,11 +106,13 @@
   background: var(--core);
   border-radius: 50%;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25), 0 0 14px #fff, 0 0 26px var(--accent);
+  will-change: transform, opacity;
+  animation: bs-attn-ping-core 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 @keyframes bs-attn-spot {
-  0%, 100% { transform: scale(0.7); opacity: 0.4; }
-  35%      { transform: scale(1.25); opacity: 1; }
-  70%      { transform: scale(1.0); opacity: 0.8; }
+  0%   { transform: scale(0.5); opacity: 0; }
+  20%  { opacity: 0.95; }
+  100% { transform: scale(1.7); opacity: 0; }
 }
 
 /* ===== Speaker control selectors ===== */
@@ -137,4 +146,47 @@
   background: #ff8c1a;
   color: #1a1205;
   font-weight: 600;
+}
+
+/* 颜色：自动 chip + 色块 */
+.bs-attn-controls .attn-colors {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+}
+.bs-attn-controls .attn-auto {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.bs-attn-controls .attn-auto:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.bs-attn-controls .attn-auto.active {
+  background: #ff8c1a;
+  color: #1a1205;
+  font-weight: 600;
+}
+.bs-attn-controls .attn-swatch {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--c, #fff);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.bs-attn-controls .attn-swatch:hover {
+  transform: scale(1.15);
+}
+.bs-attn-controls .attn-swatch.active {
+  border-color: #fff;
 }

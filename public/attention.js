@@ -58,14 +58,6 @@
     { name: 'green',   accent: '#2ee676', core: '#0a4022' },
     { name: 'blue',    accent: '#4d7cff', core: '#0a1f4a' }
   ];
-  var BY_NAME = {};
-  CANDIDATES.forEach(function (c) { BY_NAME[c.name] = c; });
-
-  var PALETTES = {
-    warm: ['orange', 'red', 'yellow'],
-    cool: ['cyan', 'blue', 'green']
-  };
-
   function normalizeBg(bgRgb) {
     if (!Array.isArray(bgRgb) || bgRgb.length < 3 ||
         ![0, 1, 2].every(function (i) { return Number.isFinite(bgRgb[i]); })) {
@@ -74,22 +66,25 @@
     return [bgRgb[0], bgRgb[1], bgRgb[2]];
   }
 
-  function pickAccent(bgRgb, mode) {
+  // 演讲者手动选色（覆盖自动）。core 由该色亮度推导，保证中心点可见。
+  function fixedAccent(fixedColor) {
+    var rgb = hexToRgb(fixedColor);
+    if (!rgb) return null;
+    var core = relativeLuminance(rgb) > 0.5 ? '#111111' : '#ffffff';
+    return { accent: fixedColor.toLowerCase(), core: core };
+  }
+
+  function pickAccent(bgRgb, mode, fixedColor) {
     bgRgb = normalizeBg(bgRgb);
-    if (mode !== 'warm' && mode !== 'cool' && mode !== 'hc') mode = 'auto';
 
-    if (mode === 'hc') {
-      var fg = relativeLuminance(bgRgb) > 0.5 ? '#111111' : '#ffffff';
-      return { accent: fg, core: fg };
+    if (mode === 'fixed') {
+      var fx = fixedAccent(fixedColor);
+      if (fx) return fx;            // 非法颜色 → 回退到 auto
     }
-
-    var pool = mode === 'auto'
-      ? CANDIDATES
-      : PALETTES[mode].map(function (n) { return BY_NAME[n]; });
 
     var best = null, bestScore = -1, bestDL = -1;
     var bgLum = relativeLuminance(bgRgb);
-    pool.forEach(function (c) {
+    CANDIDATES.forEach(function (c) {
       var rgb = hexToRgb(c.accent);
       var dL = Math.abs(relativeLuminance(rgb) - bgLum);
       var dH = hueDistance(rgb, bgRgb) / 180;
@@ -98,7 +93,9 @@
         bestScore = score; bestDL = dL; best = c;
       }
     });
-    return { accent: best.accent, core: best.core };
+    return best
+      ? { accent: best.accent, core: best.core }
+      : { accent: '#ff8c1a', core: '#ffffff' };
   }
 
   /* ============ Rendering (DOM) ============ */
@@ -119,9 +116,7 @@
     }
     if (effect === 'ripple') {
       return '<span class="bs-attn__core"></span>' +
-        '<span class="bs-attn__ring" style="animation-delay:0s"></span>' +
-        '<span class="bs-attn__ring" style="animation-delay:.35s"></span>' +
-        '<span class="bs-attn__ring" style="animation-delay:.7s"></span>';
+        '<span class="bs-attn__ring"></span>';
     }
     // ping (default) — single ring, no repeat
     return '<span class="bs-attn__core"></span>' +
@@ -145,7 +140,7 @@
 
   /* ============ Background sampling + socket wiring ============ */
 
-  var state = { effect: 'ping', colorMode: 'auto' };
+  var state = { effect: 'ping', colorMode: 'auto', color: null };
   var seen = new Set();
   var IGNORE_SELECTOR =
     '#speaker-controls,#speaker-controls-trigger,#side-panel,#mobile-fab,' +
@@ -194,6 +189,7 @@
         yPct: yPct,
         effect: state.effect,
         colorMode: state.colorMode,
+        color: state.color,
         bgRgb: sampleBgRgb(xPct, yPct) || [17, 17, 24]
       });
     });
@@ -206,7 +202,7 @@
       seen.add(msg.id);
       setTimeout(function () { seen.delete(msg.id); }, 5000);
       var bgRgb = sampleBgRgb(msg.xPct, msg.yPct) || msg.bgRgb || [17, 17, 24];
-      var picked = pickAccent(bgRgb, msg.colorMode || 'auto');
+      var picked = pickAccent(bgRgb, msg.colorMode || 'auto', msg.color);
       renderAt({
         xPct: msg.xPct,
         yPct: msg.yPct,
@@ -223,16 +219,43 @@
   /* ============ Speaker UI ============ */
 
   function getState() {
-    return { effect: state.effect, colorMode: state.colorMode };
+    return { effect: state.effect, colorMode: state.colorMode, color: state.color };
   }
 
-  function resetState() { state.effect = 'ping'; state.colorMode = 'auto'; }
+  function resetState() { state.effect = 'ping'; state.colorMode = 'auto'; state.color = null; }
 
-  function selectBtn(group, kind, value) {
-    var seg = group.querySelector('.attn-seg[data-kind="' + kind + '"]');
+  // 演讲者可选色板（与观众弹幕色板一致，便于认知统一）
+  var SWATCHES = [
+    '#ff4444', '#ffcc00', '#44ff44', '#00ffff',
+    '#4488ff', '#ff88cc', '#ff8844', '#ffffff'
+  ];
+
+  function colorRowHtml() {
+    var html = '<div class="attn-colors" data-kind="colorMode">' +
+      '<button type="button" class="attn-auto" data-v="auto" data-color="">自动</button>';
+    SWATCHES.forEach(function (c) {
+      html += '<button type="button" class="attn-swatch" data-v="fixed" ' +
+        'data-color="' + c + '" style="--c:' + c + '" title="' + c + '"></button>';
+    });
+    return html + '</div>';
+  }
+
+  function selectEffect(group, value) {
+    var seg = group.querySelector('.attn-seg[data-kind="effect"]');
     if (!seg) return;
     seg.querySelectorAll('.attn-seg-btn').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-v') === value);
+    });
+  }
+
+  function selectColor(group, colorMode, color) {
+    var row = group.querySelector('.attn-colors[data-kind="colorMode"]');
+    if (!row) return;
+    row.querySelectorAll('[data-v]').forEach(function (b) {
+      var on = (colorMode === 'auto' && b.getAttribute('data-v') === 'auto') ||
+               (colorMode === 'fixed' && b.getAttribute('data-v') === 'fixed' &&
+                (b.getAttribute('data-color') || '').toLowerCase() === (color || '').toLowerCase());
+      b.classList.toggle('active', on);
     });
   }
 
@@ -245,24 +268,25 @@
         '<button type="button" class="attn-seg-btn" data-v="ripple">波纹</button>' +
         '<button type="button" class="attn-seg-btn" data-v="spotlight">聚光</button>' +
       '</div>' +
-      '<div class="attn-seg" data-kind="colorMode">' +
-        '<button type="button" class="attn-seg-btn" data-v="auto">自动</button>' +
-        '<button type="button" class="attn-seg-btn" data-v="warm">暖</button>' +
-        '<button type="button" class="attn-seg-btn" data-v="cool">冷</button>' +
-        '<button type="button" class="attn-seg-btn" data-v="hc">黑白</button>' +
-      '</div>';
+      colorRowHtml();
     container.appendChild(group);
-    selectBtn(group, 'effect', state.effect);
-    selectBtn(group, 'colorMode', state.colorMode);
+    selectEffect(group, state.effect);
+    selectColor(group, state.colorMode, state.color);
     group.addEventListener('click', function (e) {
-      var btn = e.target.closest && e.target.closest('.attn-seg-btn');
+      var btn = e.target.closest && e.target.closest('[data-v]');
       if (!btn) return;
-      var seg = btn.closest('.attn-seg');
-      var kind = seg.getAttribute('data-kind');
+      var holder = btn.closest('[data-kind]');
+      if (!holder) return;
+      var kind = holder.getAttribute('data-kind');
       var v = btn.getAttribute('data-v');
-      if (kind === 'effect') state.effect = v;
-      else state.colorMode = v;
-      selectBtn(group, kind, v);
+      if (kind === 'effect') {
+        state.effect = v;
+        selectEffect(group, v);
+      } else {
+        state.colorMode = v;                                   // 'auto' | 'fixed'
+        state.color = v === 'fixed' ? btn.getAttribute('data-color') : null;
+        selectColor(group, state.colorMode, state.color);
+      }
     });
     return group;
   }

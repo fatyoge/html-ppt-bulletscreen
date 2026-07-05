@@ -23,10 +23,10 @@ describe('renderAt', () => {
     expect(marker.querySelectorAll('.bs-attn__ring')).toHaveLength(1);
   });
 
-  test('ripple has 3 rings', () => {
+  test('ripple has 1 ring', () => {
     renderAt({ xPct: 10, yPct: 20, effect: 'ripple', accent: '#16c2ff', core: '#06314a' });
     const marker = document.querySelector('.bs-attn--ripple');
-    expect(marker.querySelectorAll('.bs-attn__ring')).toHaveLength(3);
+    expect(marker.querySelectorAll('.bs-attn__ring')).toHaveLength(1);
   });
 
   test('auto-removes after 1.5s', () => {
@@ -74,12 +74,25 @@ describe('initSpeakerUI', () => {
     expect(getState().effect).toBe('ripple');
   });
 
-  test('clicking 暖 sets colorMode to warm', () => {
+  test('clicking a red swatch sets colorMode=fixed + color', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     initSpeakerUI(container);
-    const warmBtn = container.querySelector('.attn-seg[data-kind="colorMode"] .attn-seg-btn[data-v="warm"]');
-    warmBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    expect(getState().colorMode).toBe('warm');
+    const red = container.querySelector('.attn-swatch[data-color="#ff4444"]');
+    red.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    expect(getState().colorMode).toBe('fixed');
+    expect(getState().color).toBe('#ff4444');
+  });
+
+  test('clicking 自动 resets to auto + null color', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    const red = container.querySelector('.attn-swatch[data-color="#ff4444"]');
+    red.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const auto = container.querySelector('.attn-colors[data-kind="colorMode"] .attn-auto');
+    auto.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    expect(getState().colorMode).toBe('auto');
+    expect(getState().color).toBeNull();
   });
 });

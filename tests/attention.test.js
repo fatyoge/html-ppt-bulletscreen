@@ -17,21 +17,19 @@ describe('pickAccent', () => {
     expect(hueDistance(hexToRgb(accent), [255, 140, 26])).toBeGreaterThan(90);
   });
 
-  test('warm mode → accent chosen from warm palette only', () => {
-    const warm = ['#ff8c1a', '#e8362f', '#ffd23f'];
-    const { accent } = pickAccent([17, 17, 24], 'warm');
-    expect(warm).toContain(accent.toLowerCase());
+  test('fixed mode → uses the speaker-chosen color, core derived', () => {
+    const light = pickAccent([17, 17, 24], 'fixed', '#ffcc00');
+    expect(light.accent).toBe('#ffcc00');
+    expect(light.core).toBe('#111111');           // 浅色 → 深芯
+
+    const dark = pickAccent([255, 255, 255], 'fixed', '#4488ff');
+    expect(dark.accent).toBe('#4488ff');
+    expect(dark.core).toBe('#ffffff');            // 深色 → 浅芯
   });
 
-  test('cool mode → accent chosen from cool palette only', () => {
-    const cool = ['#16c2ff', '#4d7cff', '#2ee676'];
-    const { accent } = pickAccent([17, 17, 24], 'cool');
-    expect(cool).toContain(accent.toLowerCase());
-  });
-
-  test('hc mode → black on light bg, white on dark bg', () => {
-    expect(pickAccent([255, 255, 255], 'hc').accent).toBe('#111111');
-    expect(pickAccent([17, 17, 24], 'hc').accent).toBe('#ffffff');
+  test('fixed mode with invalid color → falls back to auto', () => {
+    const r = pickAccent([17, 17, 24], 'fixed', 'nope');
+    expect(r.accent).toMatch(/^#[0-9a-f]{6}$/i);  // auto 候选
   });
 
   test('invalid input does not throw and returns strings', () => {

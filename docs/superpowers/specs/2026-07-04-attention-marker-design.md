@@ -1,5 +1,7 @@
 # 双击注意力动效设计文档
 
+> **实现演进（2026-07-05 更新）**：动效节奏统一为单次快速扩散（~0.9s、不重复）——脉冲圈改为 MacBook 风格渐变软圈、波纹/聚光同步为单次扩散；颜色选择由「暖/冷/黑白」模板改为「自动」+ 8 个直选色块。本文下方颜色章节已同步；§3 各动效的视觉细节以代码（`public/attention.css`）为准。
+
 ## 背景
 
 现有系统是一个「演讲者—观众」HTML 幻灯片演示工具：演讲者在 `/speaker` 控制，观众在 `/` 观看并叠加弹幕。演讲者已是所有交互（翻页、清空/暂停/速度/密度/高度、动画触发）的唯一来源，Socket.IO 负责把演讲者的动作广播给全员。
@@ -10,7 +12,7 @@
 
 1. 演讲者双击幻灯片区域，所有客户端（含演讲者本机）在双击落点同步播放一次注意力动效。
 2. 提供三种动效样式：**脉冲圈（默认）**、水波纹、聚光灯，演讲者可在控制栏切换。
-3. 动效颜色根据落点底色**自动选取高对比色、避开相近色**；同时提供「自动 / 暖 / 冷 / 黑白高对比」四种颜色模板，演讲者可手动覆盖。
+3. 动效颜色根据落点底色**自动选取高对比色、避开相近色**；同时提供「自动」+ 8 个直选色块，演讲者可手动指定颜色覆盖自动。
 4. 动效为单次触发，播放完成后自动消失，不常驻、不干扰。
 
 ## 非目标
@@ -43,7 +45,7 @@
 - 命中有效区域后，计算落点相对视口的百分比坐标：
   - `xPct = clientX / window.innerWidth * 100`
   - `yPct = clientY / window.innerHeight * 100`
-- 通过 `window._danmakuSocket` 发送 `attention:ping`，payload 携带当前演讲者本地选择的样式与颜色模板。
+- 通过 `window._danmakuSocket` 发送 `attention:ping`，payload 携带当前演讲者本地选择的样式与颜色选择（`colorMode` + `color`）。
 
 #### 消息格式
 
@@ -53,7 +55,8 @@
   "xPct": 53.2,            // 0~100，相对视口宽度
   "yPct": 41.7,            // 0~100，相对视口高度
   "effect": "ping",        // ping | ripple | spotlight
-  "colorMode": "auto",     // auto | warm | cool | hc
+  "colorMode": "auto",     // auto | fixed（fixed = 演讲者手动选色）
+  "color": null,           // 仅 fixed 有效：演讲者选定的 #rrggbb；auto 时为 null
   "bgRgb": [26, 22, 40]    // 演讲者端在落点取到的底色（便于观众端复算/兜底）
 }
 ```
@@ -99,8 +102,8 @@ socket.on('attention:ping', (msg) => {
 抽成纯函数，便于 Node 单测：
 
 ```ts
-pickAccent(bgRgb: [number,number,number], mode: Mode): { accent: string, core: string }
-// Mode = 'auto' | 'warm' | 'cool' | 'hc'
+pickAccent(bgRgb: [number,number,number], mode: Mode, fixedColor?: string): { accent: string, core: string }
+// Mode = 'auto' | 'fixed'；mode='fixed' 且 fixedColor 合法时直接用该色（core 按其亮度取深/浅），非法则回退 auto
 ```
 
 #### 取色（落点底色）
@@ -131,20 +134,23 @@ pickAccent(bgRgb: [number,number,number], mode: Mode): { accent: string, core: s
 
 > `relativeLuminance` 使用 sRGB 反 gamma 线性化后的标准公式 `0.2126R + 0.7152G + 0.0722B`；`H` 取 RGB→HSL 的色相分量。
 
-#### 模板覆盖（非 auto 模式）
+#### 手动选色（fixed 模式）
 
-跳过评分，直接按模板在限定色板内按底色亮度选对比最强的一个：
+跳过评分，直接用演讲者选定的颜色：
 
-- **warm**：色板 `{橙 #ff8c1a, 砖红 #e8362f, 暖黄 #ffd23f}`，按 `dL` 最大选；core 取该候选自带的 core。
-- **cool**：色板 `{青 #16c2ff, 蓝 #4d7cff, 翠绿 #2ee676}`，同上。
-- **hc（黑白高对比）**：`fg = relativeLuminance(bg) > 0.5 ? '#111111' : '#ffffff'`；返回 `{ accent: fg, core: fg }`，描边/光晕沿用 §3 所有模式共用的固定兜底样式。
+- accent = 演讲者所选 `#rrggbb`。
+- core = `relativeLuminance(accent) > 0.5 ? '#111111' : '#ffffff'`（浅色配深芯、深色配浅芯，保证中心点可见）。
+- `fixedColor` 非法（非 `#rrggbb`）→ 回退到 auto 评分。
+- 描边/光晕沿用 §3 所有模式共用的固定兜底样式，即使所选色与底色相近仍可见。
+
+演讲者色板（与观众弹幕色板一致）：`#ff4444 #ffcc00 #44ff44 #00ffff #4488ff #ff88cc #ff8844 #ffffff`。
 
 ### 5. 演讲者控制栏 UI
 
 在 `public/danmaku-renderer.js` 的 `initSpeakerControls()` 现有控制栏（`#speaker-controls`）末尾追加两个紧凑选择器组（初始化与事件绑定逻辑放在 `attention.js`，由 `initSpeakerControls` 调用，保持职责单一）：
 
 - **动效**：三个小按钮 `脉冲 / 波纹 / 聚光`，默认「脉冲」。
-- **颜色**：四个小色块 `自动 / 暖 / 冷 / 黑白`，默认「自动」。
+- **颜色**：「自动」chip + 8 个直选色块（红/黄/绿/青/蓝/粉/橙/白），默认「自动」。点色块进入 fixed 模式用该色，点「自动」回到智能选色。
 
 两项为纯演讲者本地状态（模块内变量），每次发送 `attention:ping` 时把当前值写入 payload。不进入服务端 `controlState`，不参与新连接同步——因为它们只影响「下一次双击」的瞬时表现，不像 `speed/density/topRatio` 那样影响持续状态。
 
@@ -166,7 +172,7 @@ pickAccent(bgRgb: [number,number,number], mode: Mode): { accent: string, core: s
 
 | 事件 | 负载 | 发送者 | 描述 |
 |------|------|--------|------|
-| `attention:ping` | `{ id, xPct, yPct, effect, colorMode, bgRgb }` | speaker | 双击触发一次注意力动效 |
+| `attention:ping` | `{ id, xPct, yPct, effect, colorMode, color, bgRgb }` | speaker | 双击触发一次注意力动效 |
 
 **服务端 → 客户端**
 
@@ -193,13 +199,12 @@ pickAccent(bgRgb: [number,number,number], mode: Mode): { accent: string, core: s
 
 ### 单元测试（`tests/attention.test.js`）
 
-对纯函数 `pickAccent(bgRgb, mode)` 覆盖：
+对纯函数 `pickAccent(bgRgb, mode, fixedColor)` 覆盖：
 
 - 深色底（如 `[17,17,24]`）+ `auto` → 命中高亮暖色（亮度对比最大者），core 为浅色。
 - 浅色底（如 `[255,255,255]`）+ `auto` → 命中饱和深色，core 为深色。
 - **同色陷阱**：橙底（如 `[255,140,26]`）+ `auto` → 不选橙色，选冷色（青/翠绿等色相距离大者）。
-- `warm` / `cool` 模式 → 只在限定色板内取亮度对比最大者。
-- `hc` 模式 → 浅底返回深色、深底返回浅色。
+- `fixed` 模式 → accent = 指定色，core 按亮度取深/浅；指定色非法时回退 auto。
 - 输入非法（null / 空数组）→ 回退安全默认值，不抛异常。
 
 ### 手动验证
@@ -208,7 +213,7 @@ pickAccent(bgRgb: [number,number,number], mode: Mode): { accent: string, core: s
 2. 演讲者双击幻灯片不同位置：确认演讲者本机与观众页在同一落点出现动效，约 1.5s 后消失。
 3. 切换动效样式（脉冲/波纹/聚光），双击确认三种都能正确播放。
 4. 在深色、浅色、橙色、蓝色等不同底色的幻灯片上双击，确认颜色自动取高对比色且不与底色相近。
-5. 切换颜色模板（暖/冷/黑白），确认覆盖生效。
+5. 点不同色块切换手动选色，确认覆盖生效；点「自动」回到智能选色。
 6. 双击控制栏、弹幕面板区域，确认不触发。
 7. 观众页弹幕暂停时双击（由演讲者），确认注意力动效仍正常播放（与弹幕暂停相互独立）。
 
@@ -225,6 +230,6 @@ pickAccent(bgRgb: [number,number,number], mode: Mode): { accent: string, core: s
 ## 未来考虑（超出范围）
 
 - 持续跟随鼠标的「激光笔」模式（按住某键或开关切换）。
-- 用 `localStorage` 记住演讲者上次选择的动效样式与颜色模板。
+- 用 `localStorage` 记住演讲者上次选择的动效样式与颜色选择（自动/指定色）。
 - 动效样式扩展更多种类（如标记箭头、爆炸星等）。
 - 允许观众也能触发本地注意力标记（需评估是否会互相干扰）。
