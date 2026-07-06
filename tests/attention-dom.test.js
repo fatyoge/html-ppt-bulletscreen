@@ -2,10 +2,12 @@
  * @jest-environment jsdom
  */
 jest.useFakeTimers();
-const { renderAt, sampleBgRgb, initSpeakerUI, getState, resetState } = require('../public/attention');
+const { renderAt, sampleBgRgb, initSpeakerUI, getState, resetState, applyNoSelect, loadNoSelect } = require('../public/attention');
 
 beforeEach(() => {
   document.body.innerHTML = '';
+  document.body.classList.remove('bs-no-select');
+  localStorage.clear();
   resetState();
   jest.useFakeTimers();
 });
@@ -94,5 +96,36 @@ describe('initSpeakerUI', () => {
     auto.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     expect(getState().colorMode).toBe('auto');
     expect(getState().color).toBeNull();
+  });
+});
+
+describe('applyNoSelect', () => {
+  test('在 body 上加/移 bs-no-select 类', () => {
+    applyNoSelect(true);
+    expect(document.body.classList.contains('bs-no-select')).toBe(true);
+    applyNoSelect(false);
+    expect(document.body.classList.contains('bs-no-select')).toBe(false);
+  });
+});
+
+describe('loadNoSelect(持久化读取)', () => {
+  test('storage 为 "1" → 返回 true 且设 state + body 类', () => {
+    localStorage.setItem('bs-attn-noSelect', '1');
+    expect(loadNoSelect()).toBe(true);
+    expect(getState().noSelect).toBe(true);
+    expect(document.body.classList.contains('bs-no-select')).toBe(true);
+  });
+
+  test('默认(无 storage)→ false,不加类', () => {
+    expect(loadNoSelect()).toBe(false);
+    expect(getState().noSelect).toBe(false);
+    expect(document.body.classList.contains('bs-no-select')).toBe(false);
+  });
+
+  test('resetState 清掉 noSelect', () => {
+    localStorage.setItem('bs-attn-noSelect', '1');
+    loadNoSelect();
+    resetState();
+    expect(getState().noSelect).toBe(false);
   });
 });

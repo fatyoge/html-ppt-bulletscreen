@@ -140,7 +140,7 @@
 
   /* ============ Background sampling + socket wiring ============ */
 
-  var state = { effect: 'ping', colorMode: 'auto', color: null };
+  var state = { effect: 'ping', colorMode: 'auto', color: null, noSelect: false };
   var seen = new Set();
   var IGNORE_SELECTOR =
     '#speaker-controls,#speaker-controls-trigger,#side-panel,#mobile-fab,' +
@@ -185,6 +185,40 @@
     return stored === '1';
   }
 
+  var NO_SELECT_KEY = 'bs-attn-noSelect';
+
+  // 读 localStorage(隐私模式/被禁/Node 环境均不抛异常,返回 null)。
+  function readNoSelectStored() {
+    try {
+      return (typeof localStorage !== 'undefined') ? localStorage.getItem(NO_SELECT_KEY) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 写 localStorage(同上,失败静默吞)。
+  function writeNoSelectStored(on) {
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.setItem(NO_SELECT_KEY, on ? '1' : '0');
+    } catch (e) {
+      /* 隐私模式/被禁:当次会话内仍可用,仅不持久化 */
+    }
+  }
+
+  // 给 body 加/移 bs-no-select 类(Node/无 body 时安全返回)。
+  function applyNoSelect(on) {
+    if (typeof document === 'undefined' || !document.body) return;
+    document.body.classList.toggle('bs-no-select', !!on);
+  }
+
+  // 统一入口:读持久化 → 设 state → 套 body 类。幂等,可重复调用。
+  function loadNoSelect() {
+    var v = resolveNoSelect(readNoSelectStored());
+    state.noSelect = v;
+    applyNoSelect(v);
+    return v;
+  }
+
   function bindDblclick(socket) {
     document.addEventListener('dblclick', function (e) {
       if (e.target && e.target.closest && e.target.closest(IGNORE_SELECTOR)) return;
@@ -220,16 +254,17 @@
     });
     if (window.BS_ROLE === 'speaker') {
       bindDblclick(socket);
+      loadNoSelect();
     }
   }
 
   /* ============ Speaker UI ============ */
 
   function getState() {
-    return { effect: state.effect, colorMode: state.colorMode, color: state.color };
+    return { effect: state.effect, colorMode: state.colorMode, color: state.color, noSelect: state.noSelect };
   }
 
-  function resetState() { state.effect = 'ping'; state.colorMode = 'auto'; state.color = null; }
+  function resetState() { state.effect = 'ping'; state.colorMode = 'auto'; state.color = null; state.noSelect = false; }
 
   // 演讲者可选色板（与观众弹幕色板一致，便于认知统一）
   var SWATCHES = [
@@ -310,7 +345,9 @@
       initSpeakerUI: initSpeakerUI,
       getState: getState,
       resetState: resetState,
-      resolveNoSelect: resolveNoSelect
+      resolveNoSelect: resolveNoSelect,
+      applyNoSelect: applyNoSelect,
+      loadNoSelect: loadNoSelect
     };
   }
 
