@@ -127,6 +127,8 @@ describe('loadNoSelect(持久化读取)', () => {
     loadNoSelect();
     resetState();
     expect(getState().noSelect).toBe(false);
+    expect(localStorage.getItem('bs-attn-noSelect')).toBe('1');              // 不清 storage
+    expect(document.body.classList.contains('bs-no-select')).toBe(true);     // 不动 body 类
   });
 });
 
