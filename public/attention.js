@@ -178,6 +178,13 @@
     return null;
   }
 
+  /* ============ no-select(防误选)============ */
+
+  // localStorage 字符串 → 布尔。仅 "1" 视为开,其余(含 null/异常)视为关。
+  function resolveNoSelect(stored) {
+    return stored === '1';
+  }
+
   function bindDblclick(socket) {
     document.addEventListener('dblclick', function (e) {
       if (e.target && e.target.closest && e.target.closest(IGNORE_SELECTOR)) return;
@@ -302,7 +309,8 @@
       sampleBgRgb: sampleBgRgb,
       initSpeakerUI: initSpeakerUI,
       getState: getState,
-      resetState: resetState
+      resetState: resetState,
+      resolveNoSelect: resolveNoSelect
     };
   }
 

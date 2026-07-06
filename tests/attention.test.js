@@ -1,4 +1,4 @@
-const { pickAccent, relativeLuminance, hueDistance, hexToRgb } = require('../public/attention');
+const { pickAccent, relativeLuminance, hueDistance, hexToRgb, resolveNoSelect } = require('../public/attention');
 
 describe('pickAccent', () => {
   test('deep background + auto → bright accent (high luminance)', () => {
@@ -51,5 +51,18 @@ describe('color helpers', () => {
   test('hexToRgb parses #rrggbb', () => {
     expect(hexToRgb('#ff8c1a')).toEqual([255, 140, 26]);
     expect(hexToRgb('nope')).toBeNull();
+  });
+});
+
+describe('resolveNoSelect', () => {
+  test('"1" → true', () => {
+    expect(resolveNoSelect('1')).toBe(true);
+  });
+
+  test('"0" / null / "" / 其它字符串 → false', () => {
+    expect(resolveNoSelect('0')).toBe(false);
+    expect(resolveNoSelect(null)).toBe(false);
+    expect(resolveNoSelect('')).toBe(false);
+    expect(resolveNoSelect('garbage')).toBe(false);
   });
 });
