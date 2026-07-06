@@ -115,19 +115,22 @@
   100% { transform: scale(1.7); opacity: 0; }
 }
 
-/* ===== Speaker control selectors ===== */
-.bs-attn-controls {
+/* ===== Speaker control selectors =====
+   注意：这些控件挂在 #speaker-controls 下，必须用 #speaker-controls 前缀
+   抬高优先级，否则会被 danmaku.css 的 `#speaker-controls button` 覆盖
+   （会把色块的 var(--c) 背景盖成半透明白）。 */
+#speaker-controls .bs-attn-controls {
   display: flex;
   gap: 12px;
   align-items: center;
 }
-.bs-attn-controls .attn-seg {
+#speaker-controls .bs-attn-controls .attn-seg {
   display: inline-flex;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   overflow: hidden;
 }
-.bs-attn-controls .attn-seg-btn {
+#speaker-controls .bs-attn-controls .attn-seg-btn {
   background: rgba(255, 255, 255, 0.08);
   border: none;
   border-right: 1px solid rgba(255, 255, 255, 0.12);
@@ -136,20 +139,20 @@
   font-size: 12px;
   cursor: pointer;
 }
-.bs-attn-controls .attn-seg-btn:last-child {
+#speaker-controls .bs-attn-controls .attn-seg-btn:last-child {
   border-right: none;
 }
-.bs-attn-controls .attn-seg-btn:hover {
+#speaker-controls .bs-attn-controls .attn-seg-btn:hover {
   background: rgba(255, 255, 255, 0.18);
 }
-.bs-attn-controls .attn-seg-btn.active {
+#speaker-controls .bs-attn-controls .attn-seg-btn.active {
   background: #ff8c1a;
   color: #1a1205;
   font-weight: 600;
 }
 
 /* 颜色：自动 chip + 色块 */
-.bs-attn-controls .attn-colors {
+#speaker-controls .bs-attn-controls .attn-colors {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -157,7 +160,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
 }
-.bs-attn-controls .attn-auto {
+#speaker-controls .bs-attn-controls .attn-auto {
   background: rgba(255, 255, 255, 0.08);
   border: none;
   color: #fff;
@@ -166,15 +169,15 @@
   border-radius: 4px;
   cursor: pointer;
 }
-.bs-attn-controls .attn-auto:hover {
+#speaker-controls .bs-attn-controls .attn-auto:hover {
   background: rgba(255, 255, 255, 0.18);
 }
-.bs-attn-controls .attn-auto.active {
+#speaker-controls .bs-attn-controls .attn-auto.active {
   background: #ff8c1a;
   color: #1a1205;
   font-weight: 600;
 }
-.bs-attn-controls .attn-swatch {
+#speaker-controls .bs-attn-controls .attn-swatch {
   width: 16px;
   height: 16px;
   padding: 0;
@@ -184,9 +187,9 @@
   cursor: pointer;
   transition: transform 0.12s ease;
 }
-.bs-attn-controls .attn-swatch:hover {
+#speaker-controls .bs-attn-controls .attn-swatch:hover {
   transform: scale(1.15);
 }
-.bs-attn-controls .attn-swatch.active {
+#speaker-controls .bs-attn-controls .attn-swatch.active {
   border-color: #fff;
 }
