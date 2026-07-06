@@ -193,3 +193,39 @@
 #speaker-controls .bs-attn-controls .attn-swatch.active {
   border-color: #fff;
 }
+
+/* ===== 防误选:开时禁止幻灯片内容选中 ===== */
+body.bs-no-select { user-select: none; }
+body.bs-no-select img { -webkit-user-drag: none; }   /* 图片不产生拖拽幽灵 */
+
+/* 放开:工具自身 UI + 任何输入/可编辑元素(含分享链接可复制) */
+body.bs-no-select #speaker-controls,
+body.bs-no-select #speaker-controls-trigger,
+body.bs-no-select #side-panel,
+body.bs-no-select #mobile-fab,
+body.bs-no-select #mobile-drawer,
+body.bs-no-select #drawer-overlay,
+body.bs-no-select #share-modal,
+body.bs-no-select input,
+body.bs-no-select textarea,
+body.bs-no-select [contenteditable] { user-select: text; }
+
+/* 防误选开关(挂载于 #speaker-controls,需前缀抬高优先级,与上面 .bs-attn-controls 同理) */
+#speaker-controls .bs-attn-controls .attn-noselect-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+#speaker-controls .bs-attn-controls .attn-noselect {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #ff8c1a;
+}
