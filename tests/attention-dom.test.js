@@ -129,3 +129,50 @@ describe('loadNoSelect(持久化读取)', () => {
     expect(getState().noSelect).toBe(false);
   });
 });
+
+describe('防误选 checkbox UI', () => {
+  test('无 storage 时默认不勾选', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    const cb = container.querySelector('.attn-noselect');
+    expect(cb).not.toBeNull();
+    expect(cb.checked).toBe(false);
+    expect(getState().noSelect).toBe(false);
+  });
+
+  test('storage 为 "1" 时预勾选且 body 类已套上', () => {
+    localStorage.setItem('bs-attn-noSelect', '1');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    const cb = container.querySelector('.attn-noselect');
+    expect(cb.checked).toBe(true);
+    expect(document.body.classList.contains('bs-no-select')).toBe(true);
+  });
+
+  test('勾上 → state + body 类 + storage 同步', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    const cb = container.querySelector('.attn-noselect');
+    cb.checked = true;
+    cb.dispatchEvent(new window.Event('change'));
+    expect(getState().noSelect).toBe(true);
+    expect(document.body.classList.contains('bs-no-select')).toBe(true);
+    expect(localStorage.getItem('bs-attn-noSelect')).toBe('1');
+  });
+
+  test('取消勾选 → 一并清掉', () => {
+    localStorage.setItem('bs-attn-noSelect', '1');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    initSpeakerUI(container);
+    const cb = container.querySelector('.attn-noselect');
+    cb.checked = false;
+    cb.dispatchEvent(new window.Event('change'));
+    expect(getState().noSelect).toBe(false);
+    expect(document.body.classList.contains('bs-no-select')).toBe(false);
+    expect(localStorage.getItem('bs-attn-noSelect')).toBe('0');
+  });
+});

@@ -330,6 +330,22 @@
         selectColor(group, state.colorMode, state.color);
       }
     });
+    // 防误选开关:初始态读自持久化(loadNoSelect 同时套上 body 类),change 时翻转并持久化。
+    var noSelectNow = loadNoSelect();
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'attn-noselect';
+    cb.checked = noSelectNow;
+    var noSelectLabel = document.createElement('label');
+    noSelectLabel.className = 'attn-noselect-label';
+    noSelectLabel.textContent = '防误选';
+    noSelectLabel.appendChild(cb);
+    group.appendChild(noSelectLabel);
+    cb.addEventListener('change', function () {
+      state.noSelect = cb.checked;
+      applyNoSelect(cb.checked);
+      writeNoSelectStored(cb.checked);
+    });
     return group;
   }
 
