@@ -43,10 +43,11 @@ Bullet Screen 启动一个本地服务器,把一整套弹幕系统(渲染层 + �
 
 - **演讲者控制栏** —— 清空、暂停/恢复、调速、调密度
 - **动画同步** —— 演讲者触发的 CSS / WAAPI / GSAP / Anime.js / Lottie 动画自动在观众端重放
+- **滚动同步** —— 演讲者在滚动式站点(scroll-snap 分屏)上滚动或点链接跳页,观众端自动跟随到同一位置;演讲者身份与弹幕层跨页面保持不断
 - **注意力标注 + 防误选** —— 演讲者端标注重点,演讲中误选文字不会中断操作
 - **一键外网分享** —— `Ctrl+Alt+S` 弹出二维码与外网链接(Cloudflare Tunnel)
 - **移动端适配** —— 手机自动切换为悬浮按钮 + 侧滑抽屉
-- **整站支持** —— 单文件 HTML 或多文件静态站点均可(自动代理同源资源)
+- **整站支持** —— 单文件 HTML 或多文件静态站点均可;多页面站点的每个 `.html` 子页面都会自动注入弹幕层(自动代理同源资源)
 
 ## 快速开始
 
@@ -227,11 +228,14 @@ node server.js examples/html-ppt-test.html   # 开发模式启动
 | `→` | `danmaku:send` | audience | 发送弹幕 |
 | `→` | `danmaku:block` | moderator | 拦截弹幕 |
 | `→` | `slide:go` | speaker | 翻页 |
+| `→` | `nav:go` | speaker | 滚动式/多页面站点的位置同步(页面路径 + section 索引) |
 | `→` | `control:*` | speaker | 控制指令 |
 | `←` | `danmaku:approved` | all | 弹幕已通过 |
 | `←` | `danmaku:blocked` | all | 弹幕被拦截 |
 | `←` | `slide:go` | audience/moderator | 翻页同步 |
 | `←` | `slide:sync` | 新连接 | 当前幻灯片位置 |
+| `←` | `nav:go` | audience/moderator | 跟随演讲者滚动或跳页 |
+| `←` | `nav:sync` | 新连接 | 当前页面与 section(追赶) |
 
 完整协议见 [设计文档](docs/superpowers/specs/2026-05-24-bullet-screen-design.md)。
 

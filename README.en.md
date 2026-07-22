@@ -43,10 +43,11 @@ Bullet Screen runs a local server that injects a complete danmaku system (render
 
 - **Speaker control bar** — Clear, pause/resume, speed and density sliders
 - **Animation sync** — CSS / WAAPI / GSAP / Anime.js / Lottie animations replay on the audience side
+- **Scroll sync** — When the speaker scrolls or clicks a link on a scroll-snap site, the audience automatically follows to the same position; speaker identity and the danmaku layer persist across pages
 - **Attention marker + no-select** — Speaker highlights focus points; accidental text selection never interrupts the talk
 - **One-click external sharing** — `Ctrl+Alt+S` opens a QR code + public URL (Cloudflare Tunnel)
 - **Mobile-ready** — Phones switch to a floating button + slide-out drawer
-- **Multi-file sites** — Works with a single HTML file or a full static site (proxies same-origin assets)
+- **Multi-file sites** — Works with a single HTML file or a full static site; every `.html` subpage of a multi-page site is auto-injected with the danmaku layer (proxies same-origin assets)
 
 ## Quick Start
 
@@ -227,11 +228,14 @@ Server and client communicate via Socket.IO. Key events:
 | `→` | `danmaku:send` | audience | Send a danmaku |
 | `→` | `danmaku:block` | moderator | Block a danmaku |
 | `→` | `slide:go` | speaker | Navigate slides |
+| `→` | `nav:go` | speaker | Position sync for scroll/multi-page sites (page path + section index) |
 | `→` | `control:*` | speaker | Control command |
 | `←` | `danmaku:approved` | all | Danmaku approved |
 | `←` | `danmaku:blocked` | all | Danmaku blocked |
 | `←` | `slide:go` | audience/moderator | Slide sync |
 | `←` | `slide:sync` | new connection | Current slide position |
+| `←` | `nav:go` | audience/moderator | Follow speaker scroll or page change |
+| `←` | `nav:sync` | new connection | Current page and section (catch-up) |
 
 Full protocol in the [design doc](docs/superpowers/specs/2026-05-24-bullet-screen-design.md).
 
