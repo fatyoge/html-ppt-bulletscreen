@@ -26,13 +26,44 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
+// 分享链接相关变量。在 IIFE 内赋值（cloudflared/二维码就绪后），
+// 提升到顶层供下面的 .html 注入中间件读取（中间件注册早于 IIFE 执行，
+// 但中间件是请求时才执行，届时变量已被赋值）。
+let publicUrl = '';
+let lanUrl = '';
+let qrDataUrl = '';
+
+const siteRoot = path.dirname(path.resolve(HTML_FILE));
+
 // Static assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// .html 注入中间件：拦截所有以 .html 结尾的 GET 请求，注入弹幕层。
+// 必须注册在下面的整站 static 之前，否则 static 会直接返回原始 .html，
+// 中间件永远拿不到执行机会。首页 / 及 /speaker 等精确路由在 IIFE 内单独处理，
+// 因路径不以 .html 结尾，不会被本中间件拦截。
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || !req.path.endsWith('.html')) return next();
+
+  const filePath = path.join(siteRoot, req.path);
+  if (!filePath.startsWith(siteRoot)) return next(); // 路径穿越防护
+
+  fs.readFile(filePath, 'utf-8', (err, html) => {
+    if (err) return next(); // 文件不存在，交给后续 static 返回 404
+    if (!html.includes('</head>') || !html.includes('</body>')) return next(); // 不符合注入条件，原样返回
+
+    // 复用演讲者 cookie 校验：演讲者跨页保持身份，其余当观众
+    const cookies = parseCookie(req.headers.cookie);
+    const role = validateToken(cookies.bs_speaker_token, speakerToken) ? 'speaker' : 'audience';
+    res.send(injectHtml(html, role, '', publicUrl, lanUrl, qrDataUrl));
+  });
+});
 
 // 托管目标 HTML 文件所在目录，使其 css/ js/ data/ 等相对路径资源可被同源访问。
 // 这样多文件静态站点（如 `python -m http.server` 托管的整站）也能叠加弹幕层。
 // index:false —— 避免 static 把 GET / 直接返回原始 index.html，抢走注入路由。
-app.use(express.static(path.dirname(path.resolve(HTML_FILE)), { index: false }));
+// .html 请求已被上方中间件拦截并注入；此处只负责 css/js/img/data 等非 .html 资源。
+app.use(express.static(siteRoot, { index: false }));
 
 function checkCloudflaredInstalled() {
   return new Promise((resolve) => {
@@ -320,7 +351,7 @@ function tryListen(port) {
   }
 
   const interfaces = require('os').networkInterfaces();
-  let lanUrl = `http://localhost:${PORT}`;
+  lanUrl = `http://localhost:${PORT}`;
   for (const name in interfaces) {
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {
@@ -330,9 +361,6 @@ function tryListen(port) {
     }
     if (lanUrl !== `http://localhost:${PORT}`) break;
   }
-
-  let publicUrl = '';
-  let qrDataUrl = '';
 
   const cfInstalled = await checkCloudflaredInstalled();
   if (cfInstalled) {
