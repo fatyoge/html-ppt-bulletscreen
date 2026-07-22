@@ -170,6 +170,7 @@ io.on('connection', (socket) => {
       transforms: slideSync.getSlideTransforms(currentIdx)
     });
     socket.emit('control:state', slideSync.getControlState());
+    socket.emit('nav:sync', slideSync.getNavState());
   });
 
   // Danmaku send
@@ -246,6 +247,19 @@ io.on('connection', (socket) => {
       }
       socket.broadcast.emit('slide:go', { idx, transforms });
     }
+  });
+
+  // Nav sync: 演讲者在多页面/滚动式站点上的位置同步（页面路径 + section 索引）。
+  // 与 slide:go 同模式：speaker emit -> server 鉴权存权威状态 -> broadcast 给观众(不回声)。
+  // setNavState 做偏更新：只在 sectionIdx 为整数时更新它，非整数/缺失则保留旧值。
+  socket.on('nav:go', (msg) => {
+    if (socket.data.role !== 'speaker') return;
+    if (!msg || typeof msg.path !== 'string') return;
+    const ok = slideSync.setNavState({
+      path: msg.path,
+      sectionIdx: msg.sectionIdx
+    }, socket.id);
+    if (ok) socket.broadcast.emit('nav:go', slideSync.getNavState());
   });
 
   // Animation sync broadcast

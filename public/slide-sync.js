@@ -30,6 +30,17 @@
       goToSlide(idx, true, transforms);
     });
 
+    // Nav sync: 跟随演讲者的页面路径与 section（滚动式/多页面站点）
+    socket.on('nav:go', (state) => applyNavState(state));
+    socket.on('nav:sync', (state) => {
+      window._lastNavSync = state;
+      applyNavState(state);
+    });
+    // 追赶：连接前可能已收到 nav:sync（由 danmaku-renderer 缓存到 window）
+    if (window._lastNavSync) {
+      applyNavState(window._lastNavSync);
+    }
+
     // Catch up if we missed the initial slide:sync event
     if (typeof window._lastSlideSync === 'number') {
       goToSlide(window._lastSlideSync, true);
@@ -39,6 +50,7 @@
     if (window.BS_ROLE === 'speaker') {
       setupBroadcastChannelListener();
       setupKeyboardFallback();
+      setupNavBroadcast(); // speaker 端检测 section + 拦截内链跳转
     }
   }
 
@@ -282,6 +294,151 @@
         applyTransforms(slides[idx], transforms);
       }, 80);
     }
+  }
+
+  /* ===== Nav sync（多页面 / 滚动式站点位置同步）=====
+   * 与 slide:go 并存的独立通道。演讲者滚动(scroll-snap 分屏)或点内链跳转时，
+   * 广播 { path, sectionIdx }；观众端跟随到同一页面同一 section。
+   * 对无 snap 锚点的传统幻灯片页优雅降级为 no-op。
+   */
+
+  // 当前页面的相对路径（去 query/hash），如 '/' 或 '/projects/x.html'
+  function currentRelativePath() {
+    return location.pathname;
+  }
+
+  // 顶层 snap 锚点选择器（覆盖首页与子页面的 hero/section/footer/aside 等）
+  var SNAP_SELECTOR = '.hero, .section, .footer, .pj-hero, article, aside';
+  function getSnapSections() {
+    return Array.prototype.slice.call(document.querySelectorAll(SNAP_SELECTOR));
+  }
+
+  // 观众端正在应用远端导航时置位，避免 IntersectionObserver 回调误判（观众本就不 emit，双保险）
+  var isApplyingRemoteNav = false;
+
+  /**
+   * 观众端应用导航状态：跨页则跳转，同页则滚到对应 section。
+   * 演讲者端也会收到 catch-up 的 nav:sync，但 path 必然等于当前页，不会触发跳转。
+   */
+  function applyNavState(state) {
+    if (!state || typeof state.path !== 'string') return;
+    if (state.path !== currentRelativePath()) {
+      // 跨页跟随：用 replace 不留历史，避免观众后退混乱
+      isApplyingRemoteNav = true;
+      location.replace(state.path);
+      return;
+    }
+    // 同页：滚到对应 section（平滑滚动，与 scroll-snap 自然配合）
+    if (Number.isInteger(state.sectionIdx)) {
+      scrollToSection(state.sectionIdx);
+    }
+  }
+
+  function scrollToSection(idx) {
+    var sections = getSnapSections();
+    if (idx < 0 || idx >= sections.length) return;
+    isApplyingRemoteNav = true;
+    sections[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // 平滑滚动持续期间禁用 observer 误触发；滚动结束后释放
+    setTimeout(function() { isApplyingRemoteNav = false; }, 800);
+  }
+
+  var lastSentNavPath = null;
+  var lastSentSectionIdx = null;
+  var navSendTimer = null;
+
+  /**
+   * speaker 端：检测当前可见 section 并广播。节流 ~150ms（scroll 高频）。
+   */
+  function setupNavBroadcast() {
+    var sections = getSnapSections();
+    if (sections.length === 0) return; // 无 snap 锚点（如传统幻灯片），no-op
+
+    // 首次进入即广播当前页，确保观众 catch-up
+    broadcastNav(detectCurrentSectionIdx());
+
+    if ('IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function(entries) {
+        if (isApplyingRemoteNav) return; // 观众端应用中，忽略
+        var idx = detectCurrentSectionIdx(entries);
+        if (idx !== null) broadcastNav(idx);
+      }, { threshold: [0.4, 0.6], root: null });
+
+      sections.forEach(function(s) { observer.observe(s); });
+    }
+
+    // 拦截站内链接跳转：让观众先收到目标 path 并立即跟随，再让演讲者自己跳转。
+    // 只拦截同源、非外链、非新标签、非纯同页锚点的 <a>。
+    document.addEventListener('click', function(e) {
+      var a = e.target.closest ? e.target.closest('a') : null;
+      if (!a || !a.href) return;
+      // 修饰键 / 非左键 / 新标签：放行浏览器默认行为
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      if (a.target === '_blank') return;
+      // 仅同源
+      try {
+        if (a.origin !== location.origin) return;
+      } catch (err) { return; }
+
+      var url = new URL(a.href, location.href);
+      // 同页锚点滚动交给 IntersectionObserver，不拦截
+      if (url.pathname === location.pathname && url.hash) return;
+
+      e.preventDefault();
+      // 立即广播目标路径，观众不等演讲者新页面加载就跟随。
+      // sectionIdx 不在此处发送——新页面加载后由 observer 重新检测并广播。
+      socket.emit('nav:go', { path: url.pathname });
+      lastSentNavPath = url.pathname;
+      lastSentSectionIdx = null;
+      location.assign(a.href);
+    });
+  }
+
+  // 取可见度最高的 snap section 的索引
+  function detectCurrentSectionIdx(entries) {
+    var sections = getSnapSections();
+    if (sections.length === 0) return null;
+
+    if (entries && entries.length) {
+      // 基于 observer 回调 entries 取 ratio 最高且 isIntersecting 的
+      var best = null, bestRatio = 0;
+      entries.forEach(function(e) {
+        if (e.isIntersecting && e.intersectionRatio > bestRatio) {
+          bestRatio = e.intersectionRatio;
+          best = e.target;
+        }
+      });
+      if (best) {
+        var i = sections.indexOf(best);
+        if (i >= 0) return i;
+      }
+    }
+
+    // 兜底：按视口中心所在 section 判断
+    var midY = window.innerHeight / 2;
+    for (var i = 0; i < sections.length; i++) {
+      var r = sections[i].getBoundingClientRect();
+      if (r.top <= midY && r.bottom >= midY) return i;
+    }
+    return 0;
+  }
+
+  // 去重 + 节流广播 nav:go。idx 为 null（找不到 section）时仅同步 path。
+  function broadcastNav(idx) {
+    var path = currentRelativePath();
+    var safeIdx = Number.isInteger(idx) ? idx : null;
+    // 去重：path 与 section 都没变就不发
+    if (path === lastSentNavPath && safeIdx === lastSentSectionIdx) return;
+    lastSentNavPath = path;
+    lastSentSectionIdx = safeIdx;
+
+    if (navSendTimer) clearTimeout(navSendTimer);
+    navSendTimer = setTimeout(function() {
+      var payload = { path: path };
+      if (safeIdx !== null) payload.sectionIdx = safeIdx;
+      socket.emit('nav:go', payload);
+      navSendTimer = null;
+    }, 150);
   }
 
   if (document.readyState === 'loading') {

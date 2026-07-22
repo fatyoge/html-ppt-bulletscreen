@@ -83,4 +83,65 @@ describe('SlideSync', () => {
       2: [{ path: [0], opacity: '0.5' }]
     });
   });
+
+  /* ===== Nav state (多页面 / 滚动式站点位置同步) ===== */
+
+  test('initial nav state is root path and section 0', () => {
+    expect(sync.getNavState()).toEqual({ path: '/', sectionIdx: 0 });
+  });
+
+  test('getNavState returns a copy, not internal reference', () => {
+    const state = sync.getNavState();
+    state.path = '/mutated';
+    expect(sync.getNavState().path).toBe('/');
+  });
+
+  test('updates nav state only from current speaker', () => {
+    sync.setSpeaker('socket-1');
+    const result = sync.setNavState({ path: '/projects/x.html', sectionIdx: 2 }, 'socket-1');
+    expect(result).toBe(true);
+    expect(sync.getNavState()).toEqual({ path: '/projects/x.html', sectionIdx: 2 });
+  });
+
+  test('rejects nav update from non-speaker', () => {
+    sync.setSpeaker('socket-1');
+    const result = sync.setNavState({ path: '/hacked.html', sectionIdx: 99 }, 'socket-2');
+    expect(result).toBe(false);
+    expect(sync.getNavState()).toEqual({ path: '/', sectionIdx: 0 });
+  });
+
+  test('rejects nav update when no speaker registered', () => {
+    const result = sync.setNavState({ path: '/x.html', sectionIdx: 1 }, 'socket-1');
+    expect(result).toBe(false);
+    expect(sync.getNavState()).toEqual({ path: '/', sectionIdx: 0 });
+  });
+
+  test('partial nav update: path only keeps sectionIdx', () => {
+    sync.setSpeaker('socket-1');
+    sync.setNavState({ path: '/a.html', sectionIdx: 3 }, 'socket-1');
+    sync.setNavState({ path: '/b.html' }, 'socket-1');
+    expect(sync.getNavState()).toEqual({ path: '/b.html', sectionIdx: 3 });
+  });
+
+  test('non-integer sectionIdx is ignored, keeps previous value', () => {
+    sync.setSpeaker('socket-1');
+    sync.setNavState({ path: '/a.html', sectionIdx: 2 }, 'socket-1');
+    sync.setNavState({ path: '/b.html', sectionIdx: 2.5 }, 'socket-1');
+    // 偏更新：非整数不动 sectionIdx，保留上一个整数 2
+    expect(sync.getNavState().path).toBe('/b.html');
+    expect(sync.getNavState().sectionIdx).toBe(2);
+  });
+
+  test('explicit undefined sectionIdx keeps previous value', () => {
+    sync.setSpeaker('socket-1');
+    sync.setNavState({ path: '/a.html', sectionIdx: 2 }, 'socket-1');
+    sync.setNavState({ path: '/b.html', sectionIdx: undefined }, 'socket-1');
+    expect(sync.getNavState().sectionIdx).toBe(2);
+  });
+
+  test('invalid path type is ignored', () => {
+    sync.setSpeaker('socket-1');
+    sync.setNavState({ path: 123, sectionIdx: 1 }, 'socket-1');
+    expect(sync.getNavState().path).toBe('/');
+  });
 });
