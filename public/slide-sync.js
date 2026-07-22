@@ -302,9 +302,13 @@
    * 对无 snap 锚点的传统幻灯片页优雅降级为 no-op。
    */
 
-  // 当前页面的相对路径（去 query/hash），如 '/' 或 '/projects/x.html'
+  // 当前页面的相对路径（去 query/hash），映射成观众视角的内容路径。
+  // 演讲者访问 /speaker、管理者访问 /moderator，注入的都是与 / 相同的首页内容，
+  // 故广播给观众时必须归一为 /，否则观众无 token 访问 /speaker 会被重定向回 /。
+  // /audience 同理。子页面路径（如 /projects/x.html）不受影响。
+  var ROLE_PATH_MAP = { '/speaker': '/', '/moderator': '/', '/audience': '/' };
   function currentRelativePath() {
-    return location.pathname;
+    return ROLE_PATH_MAP[location.pathname] || location.pathname;
   }
 
   // 顶层 snap 锚点选择器（覆盖首页与子页面的 hero/section/footer/aside 等）
@@ -381,14 +385,17 @@
       } catch (err) { return; }
 
       var url = new URL(a.href, location.href);
+      // 目标 path 归一化（/index.html -> /，与观众入口一致）
+      var targetPath = ROLE_PATH_MAP[url.pathname] || url.pathname;
+      if (url.pathname === '/index.html') targetPath = '/';
       // 同页锚点滚动交给 IntersectionObserver，不拦截
-      if (url.pathname === location.pathname && url.hash) return;
+      if (targetPath === currentRelativePath() && url.hash) return;
 
       e.preventDefault();
       // 立即广播目标路径，观众不等演讲者新页面加载就跟随。
       // sectionIdx 不在此处发送——新页面加载后由 observer 重新检测并广播。
-      socket.emit('nav:go', { path: url.pathname });
-      lastSentNavPath = url.pathname;
+      socket.emit('nav:go', { path: targetPath });
+      lastSentNavPath = targetPath;
       lastSentSectionIdx = null;
       location.assign(a.href);
     });

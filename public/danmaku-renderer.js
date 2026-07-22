@@ -84,9 +84,13 @@
       }
     });
 
-    // Save slide sync data for slide-sync.js (which may miss the initial event)
+    // Save sync data for slide-sync.js (which may miss the initial event,
+    // since it binds listeners later via polling).
     socket.on('slide:sync', ({ idx }) => {
       window._lastSlideSync = idx;
+    });
+    socket.on('nav:sync', (state) => {
+      window._lastNavSync = state;
     });
   }
 
